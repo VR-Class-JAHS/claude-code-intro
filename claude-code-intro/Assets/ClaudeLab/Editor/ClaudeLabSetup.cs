@@ -1,0 +1,102 @@
+using System.IO;
+using System.Linq;
+using UnityEditor;
+using UnityEngine;
+
+namespace ClaudeLab.EditorTools
+{
+    /// <summary>
+    /// Menu: Claude Lab > Add Lab Assistant to Scene.
+    /// Creates (or finds) the proxy settings asset, fills in the token from ../vr-lab-proxy/.env if present,
+    /// and adds a ready-wired "Claude Lab Assistant" object in front of the camera.
+    /// </summary>
+    public static class ClaudeLabSetup
+    {
+        const string SettingsFolder = "Assets/ClaudeLab/Settings";
+        const string SettingsPath = SettingsFolder + "/ClaudeProxySettings.asset";
+
+        [MenuItem("Claude Lab/Add Lab Assistant to Scene")]
+        static void AddToScene()
+        {
+            var settings = FindOrCreateSettings();
+
+            var existing = Object.FindFirstObjectByType<ClaudeAgent>();
+            if (existing != null)
+            {
+                Selection.activeGameObject = existing.gameObject;
+                Debug.Log("[Claude Lab] This scene already has a ClaudeAgent; selected it.", existing);
+                return;
+            }
+
+            var go = new GameObject("Claude Lab Assistant");
+            Undo.RegisterCreatedObjectUndo(go, "Add Claude Lab Assistant");
+
+            // Place the spawn area on the floor about 1.5 m in front of the camera.
+            var cam = Camera.main;
+            if (cam != null)
+            {
+                Vector3 fwd = Vector3.ProjectOnPlane(cam.transform.forward, Vector3.up).normalized;
+                if (fwd == Vector3.zero) fwd = Vector3.forward;
+                Vector3 pos = cam.transform.position + fwd * 1.5f;
+                pos.y = FloorHeight(pos);
+                go.transform.SetPositionAndRotation(pos, Quaternion.LookRotation(fwd, Vector3.up));
+            }
+
+            var agent = go.AddComponent<ClaudeAgent>();
+            go.AddComponent<SpawnObjectTool>();
+            go.AddComponent<ClearLabTool>();
+            go.AddComponent<ClaudeTestPrompt>().agent = agent;
+
+            var so = new SerializedObject(agent);
+            so.FindProperty("settings").objectReferenceValue = settings;
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            Selection.activeGameObject = go;
+            Debug.Log("[Claude Lab] Added Claude Lab Assistant. Start vr-lab-proxy, press Play, then press T.", go);
+        }
+
+        [MenuItem("Claude Lab/Select Proxy Settings")]
+        static void SelectSettings() => Selection.activeObject = FindOrCreateSettings();
+
+        static ClaudeProxySettings FindOrCreateSettings()
+        {
+            var guid = AssetDatabase.FindAssets("t:ClaudeProxySettings").FirstOrDefault();
+            if (guid != null)
+                return AssetDatabase.LoadAssetAtPath<ClaudeProxySettings>(AssetDatabase.GUIDToAssetPath(guid));
+
+            Directory.CreateDirectory(SettingsFolder);
+            var settings = ScriptableObject.CreateInstance<ClaudeProxySettings>();
+            settings.proxyToken = ReadTokenFromProxyEnv() ?? "";
+            AssetDatabase.CreateAsset(settings, SettingsPath);
+            AssetDatabase.SaveAssets();
+
+            if (string.IsNullOrEmpty(settings.proxyToken))
+                Debug.LogWarning($"[Claude Lab] Created {SettingsPath}. Paste PROXY_TOKEN from vr-lab-proxy/.env into it.", settings);
+            else
+                Debug.Log($"[Claude Lab] Created {SettingsPath} with the token from vr-lab-proxy/.env.", settings);
+            return settings;
+        }
+
+        // The Unity project and vr-lab-proxy sit side by side in this repo.
+        static string ReadTokenFromProxyEnv()
+        {
+            string envPath = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "vr-lab-proxy", ".env"));
+            if (!File.Exists(envPath)) return null;
+
+            foreach (var raw in File.ReadAllLines(envPath))
+            {
+                string line = raw.Trim();
+                if (!line.StartsWith("PROXY_TOKEN")) continue;
+                int eq = line.IndexOf('=');
+                if (eq < 0) continue;
+                return line.Substring(eq + 1).Trim().Trim('"', '\'');
+            }
+            return null;
+        }
+
+        static float FloorHeight(Vector3 above)
+        {
+            return Physics.Raycast(above + Vector3.up * 2f, Vector3.down, out var hit, 10f) ? hit.point.y : 0f;
+        }
+    }
+}
