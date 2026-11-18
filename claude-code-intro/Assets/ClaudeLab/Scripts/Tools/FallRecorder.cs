@@ -69,13 +69,49 @@ namespace ClaudeLab
             }
         }
 
+        /// <summary>Velocity given to the object when it is released (set_property velocity on a waiting object).</summary>
+        public Vector3? LaunchVelocity { get; set; }
+
         /// <summary>Let go of a waiting object. Returns false if it wasn't waiting.</summary>
         public bool Release()
         {
             if (!IsWaiting) return false;
             Unfreeze();
+            if (LaunchVelocity.HasValue)
+            {
+                _body.linearVelocity = LaunchVelocity.Value;
+                LaunchVelocity = null;
+            }
             StartDrop();
             return true;
+        }
+
+        /// <summary>
+        /// Stop the object where it is now and, if <paramref name="wait"/>, freeze it there until Release;
+        /// otherwise start a new drop from here. Used when set_property moves it to a new height.
+        /// </summary>
+        public void Reset(bool wait)
+        {
+            _body.linearVelocity = Vector3.zero;
+            _body.angularVelocity = Vector3.zero;
+            if (wait)
+            {
+                IsWaiting = true;
+                _body.constraints = RigidbodyConstraints.FreezeAll;
+            }
+            else
+            {
+                Unfreeze();
+                StartDrop();
+            }
+        }
+
+        /// <summary>Give a moving (not waiting) object a new velocity now, recorded as a new drop.</summary>
+        public void Launch(Vector3 velocity)
+        {
+            Unfreeze();
+            _body.linearVelocity = velocity;
+            StartDrop();
         }
 
         void Unfreeze()
