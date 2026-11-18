@@ -9,7 +9,7 @@ Last updated: 2026-11-17
 - `SampleScene` already contains the **Claude Lab Assistant** object.
 - Player Settings → *Allow downloads over HTTP* = Always allowed (the proxy uses plain http).
 
-## Written, not yet tested in Unity
+## Added 2026-11-17 (panel tested in Play mode on the second laptop)
 
 - **Prompt panel** (`Scripts/ClaudeLabPanel.cs`, `Editor/ClaudeLabPanelSetup.cs`): menu **Claude Lab → Add Prompt Panel to Scene** builds a world-space canvas to the left of the spawn area. It has preset prompt buttons (edit the *Presets* list, then ⋮ → *Rebuild Buttons*), a reply box, a status line, and a *New conversation* button. Buttons are disabled while Claude is working. To test: run the menu item, press Play, click a button with the mouse or XR simulator.
 - **New tools** (`Scripts/Tools/`):
@@ -34,13 +34,13 @@ Last updated: 2026-11-17
 ## Start a session
 
 1. In `vr-lab-proxy/`, run `.venv\Scripts\python -m uvicorn main:app --port 8000`
-2. Open `claude-code-intro/` in Unity 6000.3.23f1 and open `Assets/Scenes/SampleScene`.
-3. Press Play, click the Game view, press **T**. (If the XR simulator grabs the T key, use the *Claude Test Prompt* component's ⋮ menu → *Send Prompt*.)
+2. Open `claude-code-intro/` in Unity 6000.3.28f1 (upgraded from 23f1 on 2026-11-17) and open `Assets/Scenes/SampleScene`.
+3. Press Play, point a controller ray at a panel button and press **T** (the simulator trigger; **G** grabs, **Tab** switches controller). Keep the *Claude Test Prompt* component unticked: it also listens for T and would send a second request.
 
 ## Ideas for next steps
 
-- A way for students to talk to the assistant: a world-space panel with preset prompt buttons first, then voice input.
-- Show Claude's replies on a panel in the headset instead of only in the Console.
-- More tools: read an object's speed or height, start or stop a timer, change gravity.
+- Voice input, so students can ask their own questions instead of only the preset buttons.
+- Show the panel near the student wherever they stand (follow or summon it).
+- Check each new tool on its own: measure_object after a student drop, lab_timer, set_gravity on Moon and zero.
 - Try it on the headset: set `proxyUrl` to `http://<this computer's IP>:8000` and allow port 8000 through the firewall.
 - Check the pendulum and ramp visually. Only the ball and block have been tested in Play mode.
