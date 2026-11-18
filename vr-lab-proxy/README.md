@@ -26,37 +26,63 @@ While running, the proxy broadcasts a small signed announcement on UDP port 4780
 - If the network drops broadcasts (some school Wi-Fi does), headsets fall back to `proxyUrl` in the Unity settings asset.
 - `PROXY_PORT` in `.env` must match uvicorn's `--port` if you change it from 8000. `ANNOUNCE=0` turns announcements off.
 
-## When the school network blocks Anthropic (Tailscale)
+## Classroom network: Meta router + Tailscale exit node
 
-Only the computer running the proxy needs to reach `api.anthropic.com`. Headsets and student computers only talk to the proxy over the school network. If the school blocks Anthropic, send that one computer's internet traffic through a computer at home with Tailscale:
+Tested 2026-11-18 on the school computer with a Quest 3S. In class, the headsets and the proxy computer all join the classroom's Meta router (`NETGEAR_11ac`). That network reaches Meta but blocks `api.anthropic.com`, so the proxy computer sends its internet traffic through a small cloud server (`vr-lab-exit`) with Tailscale:
 
 ```
-headsets / student computers ──school Wi-Fi──▶ proxy computer ──Tailscale──▶ home laptop ──▶ api.anthropic.com
+headsets ──Meta router──▶ proxy computer ──Tailscale──▶ vr-lab-exit (cloud) ──▶ api.anthropic.com
 ```
 
-Check with school IT first: routing around the web filter may go against the network's acceptable-use policy. Asking them to allow `api.anthropic.com` (HTTPS, port 443), like the Meta exception, would be simpler still.
+Only the proxy computer needs Tailscale. Headsets only talk to the proxy, and on the Meta router they find it through auto-discovery with no address typed in.
 
-### Home laptop (once)
+Why not the school Wi-Fi (`ncpsp`): it blocks Anthropic too, and a headset on it never connected to the proxy. The announcements didn't arrive, so it fell back to `proxyUrl` (`localhost`). Whether `ncpsp` lets devices reach each other directly wasn't tested.
 
-1. Install Tailscale from tailscale.com/download and sign in.
-2. Tailscale tray icon → **Exit nodes** → **Run exit node**.
-3. In the admin console (login.tailscale.com/admin/machines), open the laptop's **⋯** menu:
-   - **Edit route settings** → tick **Use as exit node**.
-   - **Disable key expiry**, so the laptop doesn't drop off the tailnet after a few months.
-4. Tailscale tray icon → **Preferences** → **Run unattended**, so it keeps working after a restart before anyone logs in.
-5. Windows Settings → **Power**: never sleep when plugged in, and *Do nothing* when the lid is closed. Leave it plugged in and on Wi-Fi or Ethernet.
+Check with school IT: routing around the web filter may go against the network's acceptable-use policy. If they allow `api.anthropic.com` (HTTPS, port 443) on the Meta router, like the Meta exception, the exit node isn't needed.
 
-### School proxy computer (once, then each class)
+### Cloud exit node (once)
 
-1. Install Tailscale and sign in to the same account. On a managed computer this may need IT or admin rights. If it never connects on the school Wi-Fi, the filter blocks Tailscale too.
-2. Tailscale tray icon → **Exit nodes** → choose the home laptop, and tick **Allow local network access**. Without that box, headsets and student computers can't reach the proxy.
-3. Check that Anthropic is reachable. A 4xx code such as `401`, `404` or `405` means Anthropic answered; a hang, `000`, or a redirect code means the traffic is still being filtered:
+A DigitalOcean Basic droplet, $4/month (512 MB). It's billed by the hour, and a powered-off droplet still bills: **Destroy** it to stop charges.
+
+1. **Create → Droplets**: region New York (any datacenter), image Ubuntu 24.04 LTS, size Basic → Regular → $4/mo, authentication Password (long and random, kept in a password manager), hostname `vr-lab-exit`.
+2. When it shows **Active**, click **Web Console** (next to **Actions**) and run, one at a time:
+   ```bash
+   curl -fsSL https://tailscale.com/install.sh | sh
+   echo 'net.ipv4.ip_forward = 1' | sudo tee -a /etc/sysctl.d/99-tailscale.conf
+   echo 'net.ipv6.conf.all.forwarding = 1' | sudo tee -a /etc/sysctl.d/99-tailscale.conf
+   sudo sysctl -p /etc/sysctl.d/99-tailscale.conf
+   sudo tailscale up
+   sudo tailscale set --advertise-exit-node
+   ```
+   `tailscale up` prints a login link: open it and sign in. On 2026-11-18, running `set --advertise-exit-node` before signing in didn't stick, and running it again after signing in fixed it, hence this order.
+3. At login.tailscale.com/admin/machines, open `vr-lab-exit`'s **⋯** menu: **Edit route settings** → tick **Use as exit node**, then **Disable key expiry**.
+
+Not done yet: the droplet still accepts password logins over SSH from the internet. Locking it down to Tailscale devices only is a follow-up.
+
+A computer at home can be the exit node instead: install Tailscale, turn on **Run exit node** in its tray menu, approve it the same way, and keep it awake.
+
+### Proxy computer (once)
+
+1. Install Tailscale for Windows and sign in to the same account (needs admin rights).
+2. Add the firewall rule from **Setup** above. Windows marks both school networks as Public; the rule covers that.
+
+### Each class
+
+1. Connect the proxy computer to `NETGEAR_11ac` (Wi-Fi, or Ethernet to a LAN port).
+2. Tailscale tray icon → **Use exit node** → `vr-lab-exit`, and tick **Allow local network access**. Without that box, headsets can't reach the proxy.
+3. Check that Anthropic is reachable. A 4xx code such as `401`, `404` or `405` means Anthropic answered; a hang, `000`, or a redirect code means it's still filtered:
    ```powershell
    curl.exe -s -o NUL -w "%{http_code}`n" https://api.anthropic.com/v1/messages
    ```
-4. Start the proxy as usual and run the tests below, plus `/health` from another device on the school Wi-Fi.
+4. Start the proxy with `--host 0.0.0.0`. Headsets on `NETGEAR_11ac` find it automatically. To check from a headset, open `http://<proxy computer's address>:8000/health` in the Quest browser.
+5. After class: **Use exit node** → **None**. While it's on, all of the computer's internet traffic goes through the cloud server.
 
-While the exit node is on, all of this computer's internet traffic goes through home, not just Claude's. Turn it off (**Exit nodes** → **None**) after class. If the home laptop is off or offline, `/chat` returns 502 *could not reach Claude API*; a phone hotspot on the proxy computer is the fallback.
+If the exit node is unreachable, `/chat` returns 502 *could not reach Claude API*; a phone hotspot on the proxy computer is the fallback.
+
+Notes:
+- The school Wi-Fi gives out `100.x` addresses, the same range Tailscale uses. Checked on 2026-11-18: traffic to other devices on that network still goes over Wi-Fi with the exit node on.
+- If the router hands the proxy computer a new address each day, only the `proxyUrl` fallback cares. A DHCP reservation in the router keeps it fixed.
+- If headsets can't reach the proxy on the router, look for client (AP) isolation in its settings. It wasn't needed on 2026-11-18.
 
 ## Test it (session 1 "done")
 

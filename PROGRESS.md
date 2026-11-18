@@ -4,16 +4,15 @@ Last updated: 2026-11-18
 
 ## Next session (start here)
 
-Week 1 of the project plan is done (all five sessions ticked). Picking up on the school computer:
+Week 1 of the project plan is done, and the classroom network works on the school computer (see *Classroom network* below). Next:
 
-1. Install **Unity 6000.3.28f1** with Android Build Support in Unity Hub (the project was upgraded from 23f1 on 2026-11-17).
-2. Pull `main`, open `claude-code-intro/` in Unity and let it rebuild its library.
-3. The school computer already has `vr-lab-proxy/.env`, `.venv` and the proxy settings asset from 2026-11-17. If Unity says the assistant has no proxy settings, run **Claude Lab → Select Proxy Settings** and save the scene.
-4. Start the proxy with `--host 0.0.0.0` (see Start a session). For the headset to reach it, add the firewall rule from `vr-lab-proxy/README.md` (admin PowerShell, once per computer).
-5. Dev log: the plan's 2026-11-17 school row is missing the details of that afternoon's Claude Code session on the school computer (the Unity agent loop and first tools). Find that session in the Code tab and fill in *Where Claude Code helped* and *Where I stepped in*.
-6. Next build: **measurement graphs** (Weeks 2–3). Needs a `start_measurement` tool that records readings over time, and a chart on the panel. `measure_object` and `get_scene_state` already give one-off readings.
+1. **Proxy settings link**: each computer's `ClaudeProxySettings` asset has its own ID, so saving `SampleScene` on one computer breaks the link on the other. Until it's fixed, run **Claude Lab → Select Proxy Settings** after switching computers. A permanent fix (find the settings asset by type at runtime, or load it from `Resources`) is the next small PR.
+2. **Uncommitted Unity changes on the school computer** (2026-11-18): `SampleScene.unity` (the settings link above), plus `ProjectSettings.asset`, `UnityConnectSettings.asset`, URP configs and `OpenXRPackageSettings.asset` from the build. Review before committing anything (see CLAUDE.md). The build also left an untracked `build …_BackUpThisFolder_ButDontShipItWithYourGame/` folder, which should go in `.gitignore`.
+3. **Lock down `vr-lab-exit`**: it still accepts SSH password logins from the internet. Limit it to Tailscale devices.
+4. **Ask IT** whether `api.anthropic.com` can be allowed on the Meta router, like Meta. That would remove the need for the exit node.
+5. Next build: **measurement graphs** (Weeks 2–3). Needs a `start_measurement` tool that records readings over time, and a chart on the panel. `measure_object` and `get_scene_state` already give one-off readings.
 
-Open questions: whether school Wi-Fi passes the proxy's UDP broadcasts and lets headsets reach the computer (see Ideas).
+Open questions: whether 36 students on one API key stay inside the account's per-minute rate limits; whether the school Wi-Fi (`ncpsp`) lets devices reach each other directly (not needed now that class uses the Meta router).
 
 ## Working now
 
@@ -48,6 +47,15 @@ Open questions: whether school Wi-Fi passes the proxy's UDP broadcasts and lets 
 
 - **Typed input** (tested in Play mode 2026-11-17): a text box and Send button under the reply (`Scripts/TypedPromptInput.cs`, added at Play time). Enter also sends. Shown in the Editor and desktop builds, hidden on the Quest (*Typed Input Desktop Only* on the panel). While the box has focus the Input System keyboard is paused so typed letters don't drive the XR simulator. Covers Week 1 session 2's text box.
 
+## Classroom network (tested 2026-11-18 on the school computer and a Quest 3S)
+
+- The school network blocks `api.anthropic.com`, including on the classroom's Meta router (`NETGEAR_11ac`), which otherwise reaches Meta.
+- Fix: the proxy computer uses **Tailscale** with a $4/month DigitalOcean droplet, `vr-lab-exit`, as its exit node (with *Allow local network access* on). Only the proxy computer needs it; headsets just talk to the proxy.
+- Class runs on the Meta router: proxy computer and headsets both on `NETGEAR_11ac`. Auto-discovery worked there with no rebuild: the headset found the proxy and the panel answered.
+- On the school Wi-Fi (`ncpsp`) the headset never connected: no announcements arrived, so it fell back to `proxyUrl` = `localhost`.
+- Firewall rule *VR Lab proxy (port 8000)* added on the school computer.
+- Setup and the per-class checklist: `vr-lab-proxy/README.md` → *Classroom network*.
+
 ## Setup gotcha
 
 - The keys file must be named `.env` (with the dot). A file named `env` is not read by the proxy and is not ignored by git.
@@ -62,7 +70,7 @@ Open questions: whether school Wi-Fi passes the proxy's UDP broadcasts and lets 
 
 ## Start a session
 
-1. In `vr-lab-proxy/`, run `.venv\Scripts\python -m uvicorn main:app --host 0.0.0.0 --port 8000`
+1. In `vr-lab-proxy/`, run `.venv\Scripts\python -m uvicorn main:app --host 0.0.0.0 --port 8000`. At school, first follow *Each class* in `vr-lab-proxy/README.md` (Meta router + exit node).
 2. Open `claude-code-intro/` in Unity 6000.3.28f1 (upgraded from 23f1 on 2026-11-17) and open `Assets/Scenes/SampleScene`.
 3. Press Play, point a controller ray at a panel button and press **T** (the simulator trigger; **G** grabs, **Tab** switches controller). Keep the *Claude Test Prompt* component unticked: it also listens for T and would send a second request.
 
@@ -71,4 +79,4 @@ Open questions: whether school Wi-Fi passes the proxy's UDP broadcasts and lets 
 - Voice input, so students can ask their own questions instead of only the preset buttons.
 - Show the panel near the student wherever they stand (follow or summon it).
 - Check each new tool on its own: measure_object after a student drop, lab_timer, set_gravity on Moon and zero.
-- Check whether school Wi-Fi passes UDP broadcasts and device-to-device traffic; if not, look at a hotspot or a dedicated router for the cart.
+- ~~Check whether school Wi-Fi passes UDP broadcasts and device-to-device traffic~~ Done 2026-11-18: class uses the Meta router instead (see *Classroom network*).
