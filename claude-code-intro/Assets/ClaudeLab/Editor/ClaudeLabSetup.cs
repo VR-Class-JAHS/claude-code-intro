@@ -14,6 +14,7 @@ namespace ClaudeLab.EditorTools
     {
         const string SettingsFolder = "Assets/ClaudeLab/Settings";
         const string SettingsPath = SettingsFolder + "/ClaudeProxySettings.asset";
+        const string ObjectMaterialPath = "Assets/ClaudeLab/Materials/LabObject.mat";
 
         [MenuItem("Claude Lab/Add Lab Assistant to Scene")]
         static void AddToScene()
@@ -79,7 +80,7 @@ namespace ClaudeLab.EditorTools
         static readonly System.Type[] ToolTypes =
         {
             typeof(SpawnObjectTool), typeof(ClearLabTool), typeof(MeasureObjectTool),
-            typeof(LabTimerTool), typeof(SetGravityTool),
+            typeof(LabTimerTool), typeof(SetGravityTool), typeof(ReleaseObjectsTool),
         };
 
         static int AddMissingTools(GameObject go)
@@ -91,6 +92,24 @@ namespace ClaudeLab.EditorTools
                 Undo.AddComponent(go, type);
                 added++;
             }
+            // Spawned shapes need a real URP material, or they render purple in builds.
+            var spawner = go.GetComponentInChildren<SpawnObjectTool>();
+            if (spawner != null && spawner.objectMaterial == null)
+            {
+                var mat = AssetDatabase.LoadAssetAtPath<Material>(ObjectMaterialPath);
+                if (mat == null)
+                {
+                    Debug.LogWarning($"[Claude Lab] {ObjectMaterialPath} is missing; spawned objects may be purple in builds.");
+                }
+                else
+                {
+                    Undo.RecordObject(spawner, "Assign lab object material");
+                    spawner.objectMaterial = mat;
+                    EditorUtility.SetDirty(spawner);
+                    added++;
+                }
+            }
+
             // Not a tool, but every assistant should have it: lets the headset find the proxy on the Wi-Fi.
             if (go.GetComponent<ProxyDiscovery>() == null)
             {

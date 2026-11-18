@@ -134,6 +134,22 @@ namespace ClaudeLab.EditorTools
             Debug.Log("[Claude Lab] Added Claude Prompt Panel. Edit its Presets list in the Inspector, then ⋮ → Rebuild Buttons.", root);
         }
 
+        [MenuItem("Claude Lab/Reset Prompt Panel Position")]
+        static void ResetPanelPosition()
+        {
+            var panel = Object.FindFirstObjectByType<ClaudeLabPanel>();
+            if (panel == null)
+            {
+                Debug.LogWarning("[Claude Lab] No prompt panel in this scene. Use Claude Lab → Add Prompt Panel to Scene.");
+                return;
+            }
+            var rt = (RectTransform)panel.transform;
+            Undo.RecordObject(rt, "Reset Prompt Panel Position");
+            Place(rt, Object.FindFirstObjectByType<ClaudeAgent>());
+            Selection.activeGameObject = panel.gameObject;
+            Debug.Log("[Claude Lab] Moved the prompt panel to its default spot, left of the spawn area. Save the scene.", panel);
+        }
+
         static TextMeshProUGUI AddText(Transform parent, string name, string text, float size, Color color, float height)
         {
             var go = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI), typeof(LayoutElement));
@@ -158,7 +174,8 @@ namespace ClaudeLab.EditorTools
             if (fwd == Vector3.zero) fwd = Vector3.forward;
             Vector3 right = Vector3.Cross(Vector3.up, fwd);
 
-            Vector3 pos = camPos + fwd * 1.0f - right * 0.55f;
+            // About 45 degrees to the left, 1.1 m away: clear of the spawn row, which fills from straight ahead outward.
+            Vector3 pos = camPos + fwd * 0.8f - right * 0.8f;
             float floor = agent != null ? agent.transform.position.y : 0f;
             pos.y = floor + 1.25f;
 

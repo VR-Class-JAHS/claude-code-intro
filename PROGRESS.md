@@ -26,6 +26,11 @@ Last updated: 2026-11-17
 - Firewall: inbound TCP 8000 allowed from the local subnet (rule *VR Lab proxy (port 8000)*, added on this laptop). Needed on every computer that runs the proxy.
 - Build: Android Build Support module, Build Profiles → Android → Switch Platform, Run Device = Quest, Project Validation → Fix All, Build and Run.
 
+- **Release button** (tested in Play mode and on the Quest 3S, 2026-11-17): balls and blocks now spawn frozen in mid-air and drop together when a student presses the green **Release** button on the panel (no Claude round trip), or when Claude calls the new `release_objects` tool. Turn off with *Hold Until Release* on the spawn tool. Fall timing starts at release. Checked through the API: Claude sets objects up and tells the student to press Release.
+- **Movable panel** (tested 2026-11-17): a *Grab here to move* bar along the bottom of the panel (`Scripts/PanelMover.cs`, added at Play time when the panel's *Movable* box is ticked). Grab it with a controller ray, hand, or the simulator's **G** (grip); the panel stays upright and turns to face you. Only the bar has a collider, so the buttons still click normally.
+- **Panel starting spot** (tested 2026-11-17): new panels go about 45° to the left, 1.1 m away. **Claude Lab → Reset Prompt Panel Position** moves an existing panel there (then save the scene). The spawn row now fills from the middle outward, right side first, so the first objects land straight ahead.
+- **Purple objects in builds fixed**: spawned shapes use `Assets/ClaudeLab/Materials/LabObject.mat` (URP Lit), assigned to the spawn tool's *Object Material* by **Claude Lab → Add Lab Assistant to Scene**. Tested on the Quest 3S.
+
 ## Setup gotcha
 
 - The keys file must be named `.env` (with the dot). A file named `env` is not read by the proxy and is not ignored by git.

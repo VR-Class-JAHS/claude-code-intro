@@ -79,3 +79,6 @@ crashlytics-build.properties
 # Claude Lab: holds the proxy token
 /[Aa]ssets/ClaudeLab/Settings/ClaudeProxySettings.asset
 /[Aa]ssets/ClaudeLab/Settings/ClaudeProxySettings.asset.meta
+
+# Burst debug symbols written next to builds
+*_BurstDebugInformation_DoNotShip/

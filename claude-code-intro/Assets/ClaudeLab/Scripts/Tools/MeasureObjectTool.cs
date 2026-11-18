@@ -66,6 +66,7 @@ namespace ClaudeLab
             {
                 var body = recorder.Body;
                 string s = $"{t.name} ({body.mass:0.##} kg): now {recorder.Height:0.00} m high, speed {body.linearVelocity.magnitude:0.00} m/s";
+                if (recorder.IsWaiting) return s + ", frozen in place waiting for the student to press Release.";
                 if (recorder.IsHeld) return s + ", a student is holding it.";
                 if (!recorder.HasDrop) return s + ".";
                 if (!recorder.HasLanded)
