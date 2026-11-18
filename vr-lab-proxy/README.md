@@ -57,7 +57,15 @@ A DigitalOcean Basic droplet, $4/month (512 MB). It's billed by the hour, and a 
    `tailscale up` prints a login link: open it and sign in. On 2026-11-18, running `set --advertise-exit-node` before signing in didn't stick, and running it again after signing in fixed it, hence this order.
 3. At login.tailscale.com/admin/machines, open `vr-lab-exit`'s **⋯** menu: **Edit route settings** → tick **Use as exit node**, then **Disable key expiry**.
 
-Not done yet: the droplet still accepts password logins over SSH from the internet. Locking it down to Tailscale devices only is a follow-up.
+4. Lock it down so it's reachable only through Tailscale (done 2026-11-18):
+   - In the droplet's Web Console: `sudo tailscale set --ssh`. Your tailnet's **Tailscale SSH** policy needs a rule letting you reach your own devices (the default: `autogroup:member` → `autogroup:self` as `autogroup:nonroot, root`).
+   - From your computer, check `ssh root@vr-lab-exit` logs in without a password. The first time, answer `yes` to the new host key.
+   - DigitalOcean **Networking → Firewalls → Create Firewall** (`vr-lab-exit-lockdown`): no inbound rules, default outbound rules, applied to `vr-lab-exit`.
+   - Over `ssh root@vr-lab-exit`: `systemctl disable --now ssh.socket ssh.service`, which turns off the normal SSH server so nothing answers port 22 from the internet. Tailscale SSH keeps working.
+
+   Afterwards, manage the droplet with `ssh root@vr-lab-exit`. DigitalOcean's Web Console no longer works. If Tailscale ever breaks on it, use **Access → Recovery Console** with the root password, and `systemctl enable --now ssh.socket` turns the normal SSH server back on.
+
+   Testing tip: with the exit node on, connecting to the droplet's *public* IP goes through the tunnel and bypasses the DigitalOcean firewall, so it can't test the firewall. After the lockdown, the public IP refuses port 22 even that way.
 
 A computer at home can be the exit node instead: install Tailscale, turn on **Run exit node** in its tray menu, approve it the same way, and keep it awake.
 
