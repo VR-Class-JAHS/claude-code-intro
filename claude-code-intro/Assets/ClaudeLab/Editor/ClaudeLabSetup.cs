@@ -77,6 +77,7 @@ namespace ClaudeLab.EditorTools
             typeof(SpawnObjectTool), typeof(ClearLabTool), typeof(MeasureObjectTool),
             typeof(LabTimerTool), typeof(SetGravityTool), typeof(ReleaseObjectsTool),
             typeof(GetSceneStateTool), typeof(SetPropertyTool),
+            typeof(StartMeasurementTool), typeof(ReadMeasurementTool),
         };
 
         static int AddMissingTools(GameObject go)

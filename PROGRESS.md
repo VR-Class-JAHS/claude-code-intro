@@ -6,11 +6,11 @@ Last updated: 2026-11-18
 
 Week 1 of the project plan is done, and the classroom network works on the school computer (see *Classroom network* below). Next:
 
-1. **Proxy settings link fixed** (2026-11-18): the settings asset now lives in `Assets/ClaudeLab/Settings/Resources/` and is loaded by name, so the scene no longer links to it. When Unity opens on the laptop after pulling, it moves the old asset there by itself (watch the Console for *Moved the proxy settings*). Check Play mode there once.
+1. **Proxy settings link fixed** (2026-11-18): the settings asset now lives in `Assets/ClaudeLab/Settings/Resources/` and is loaded by name, so the scene no longer links to it. On the laptop, Unity moved the old asset there by itself, and Play mode works (checked 2026-11-18).
 2. **Build changes reviewed** (2026-11-18): every leftover change from the school build was noise and was discarded, including the old scene settings link. CLAUDE.md now lists the files builds rewrite. The build backup folder is gitignored (commit 97bcbf2, which went to `main` directly without a PR).
 3. **`vr-lab-exit` locked down** (2026-11-18): Tailscale SSH on, a DigitalOcean firewall with no inbound rules, and OpenSSH turned off. Manage it with `ssh root@vr-lab-exit`; the DigitalOcean Web Console no longer works (Recovery Console does). Steps in `vr-lab-proxy/README.md`.
 4. **Ask IT** whether `api.anthropic.com` can be allowed on the Meta router, like Meta. That would remove the need for the exit node.
-5. Next build: **measurement graphs** (Weeks 2–3). Needs a `start_measurement` tool that records readings over time, and a chart on the panel. `measure_object` and `get_scene_state` already give one-off readings.
+5. **Measurement graphs** done on branch `measurement-graphs` (2026-11-18), tested in Play mode and on the Quest. Next in Weeks 2–3: voice input. Details under *Measurement graphs* below.
 
 Open questions: whether 36 students on one API key stay inside the account's per-minute rate limits; whether the school Wi-Fi (`ncpsp`) lets devices reach each other directly (not needed now that class uses the Meta router).
 
@@ -55,6 +55,8 @@ Open questions: whether 36 students on one API key stay inside the account's per
 - On the school Wi-Fi (`ncpsp`) the headset never connected: no announcements arrived, so it fell back to `proxyUrl` = `localhost`.
 - Firewall rule *VR Lab proxy (port 8000)* added on the school computer.
 - Setup and the per-class checklist: `vr-lab-proxy/README.md` → *Classroom network*.
+
+- **Measurement graphs** (tested in Play mode and on the Quest 3S, 2026-11-18): `start_measurement` records height, speed, vertical velocity or energy (kinetic, potential from the floor, total) over 1–20 s, up to 4 lines, 25 readings a second. If the objects wait for Release, recording starts at Release (t = 0). `read_measurement` gives Claude each line's start, end, lowest and highest values with times, plus 12 evenly spaced readings. The panel shows a live graph under the reply (`MeasurementGraph`, `LineGraph`; *Show Graph* on the panel). New presets *Energy graph* and *Explain the graph*. The panel also turns Markdown in replies (`**bold**`, bullets, headings) into rich text. Simulated through the proxy: "drop a ball from 3 meters and graph its energy" chains spawn_object -> start_measurement(energy), then asks the student to press Release. Run **Claude Lab → Add Lab Assistant to Scene** to add the tools.
 
 ## Setup gotcha
 

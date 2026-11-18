@@ -31,6 +31,8 @@ namespace ClaudeLab
             new Preset { label = "Ramp", prompt = "Set up a 30 degree ramp." },
             new Preset { label = "How fast did it hit?", prompt = "Measure the objects. How long did each one take to fall, and how fast was it going when it hit?" },
             new Preset { label = "Heavier + higher", prompt = "Make the ball twice as heavy and drop it from higher." },
+            new Preset { label = "Energy graph", prompt = "Drop a ball from 3 meters and graph its energy as it falls." },
+            new Preset { label = "Explain the graph", prompt = "Read the measurement and explain what the graph shows." },
             new Preset { label = "Moon gravity", prompt = "Switch to Moon gravity and drop a ball from 2 meters." },
             new Preset { label = "Back to Earth", prompt = "Set gravity back to Earth's." },
             new Preset { label = "Clear the lab", prompt = "Clear the lab." },
@@ -48,6 +50,10 @@ namespace ClaudeLab
         [Tooltip("Defaults to the ReleaseObjectsTool in the scene.")]
         public ReleaseObjectsTool releaseTool;
         public Color releaseButtonColor = new Color(0.16f, 0.55f, 0.30f);
+
+        [Header("Graph")]
+        [Tooltip("Adds a graph under the reply that shows start_measurement recordings as they happen.")]
+        public bool showGraph = true;
 
         [Header("Typed input")]
         [Tooltip("Adds a text box and Send button under the reply, for typing any request.")]
@@ -71,7 +77,11 @@ namespace ClaudeLab
         {
             if (agent == null) agent = FindFirstObjectByType<ClaudeAgent>();
             RebuildButtons();
-            // Before PanelMover: it sizes its grab bar after the panel's layout, which this row changes.
+            // Graph first, then the typed-input row: both go right under the reply box, so this order puts
+            // the text box directly under the reply and the graph below it.
+            if (showGraph && GetComponent<MeasurementGraph>() == null)
+                gameObject.AddComponent<MeasurementGraph>();
+            // Before PanelMover: it sizes its grab bar after the panel's layout, which these rows change.
             bool typingPractical = Application.isEditor || !Application.isMobilePlatform;
             if (showTypedInput && (typingPractical || !typedInputDesktopOnly) && GetComponent<TypedPromptInput>() == null)
                 gameObject.AddComponent<TypedPromptInput>();
@@ -211,7 +221,21 @@ namespace ClaudeLab
 
         void ShowReply(string text)
         {
-            if (replyText != null) replyText.text = text;
+            if (replyText != null) replyText.text = MarkdownToRichText(text);
+        }
+
+        /// <summary>
+        /// Claude sometimes answers in Markdown. TextMeshPro shows that literally, so turn the common bits into
+        /// rich text: **bold** and *italic*, headings as bold lines, and "- " bullets as "• ".
+        /// </summary>
+        public static string MarkdownToRichText(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return text;
+            text = System.Text.RegularExpressions.Regex.Replace(text, @"\*\*(.+?)\*\*", "<b>$1</b>");
+            text = System.Text.RegularExpressions.Regex.Replace(text, @"(?<![\*\w])\*(?!\s)(.+?)(?<!\s)\*(?![\*\w])", "<i>$1</i>");
+            text = System.Text.RegularExpressions.Regex.Replace(text, @"(?m)^#{1,6}\s+(.+)$", "<b>$1</b>");
+            text = System.Text.RegularExpressions.Regex.Replace(text, @"(?m)^(\s*)[-*]\s+", "$1• ");
+            return text;
         }
 
         void ShowToolUsed(string toolName)

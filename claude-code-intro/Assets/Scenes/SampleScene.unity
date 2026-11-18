@@ -9149,6 +9149,8 @@ GameObject:
   - component: {fileID: 884547664}
   - component: {fileID: 884547666}
   - component: {fileID: 884547665}
+  - component: {fileID: 884547668}
+  - component: {fileID: 884547667}
   m_Layer: 0
   m_Name: Claude Lab Assistant
   m_TagString: Untagged
@@ -9217,7 +9219,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6876b4403eb50204883649b07e1b6bc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClaudeLab.ClaudeAgent
-  settings: {fileID: 11400000, guid: ef682a572a6f15f4d89c2057ffeedda5, type: 2}
   tools: []
   onAssistantText:
     m_PersistentCalls:
@@ -9299,7 +9300,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 01e48267a6460d540a0a498cd37944c7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClaudeLab.ProxyDiscovery
-  settings: {fileID: 0}
   listenInEditor: 0
   maxClockDifferenceSeconds: 300
 --- !u!114 &884547664
@@ -9341,6 +9341,38 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClaudeLab.GetSceneStateTool
   spawner: {fileID: 0}
+--- !u!114 &884547667
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 884547654}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e3edc05900398514ead97dd6201ab486, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClaudeLab.ReadMeasurementTool
+  measurement: {fileID: 0}
+  readings: 12
+--- !u!114 &884547668
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 884547654}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e6751ecd5b0ad94fb698729f1859abb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClaudeLab.StartMeasurementTool
+  spawner: {fileID: 0}
+  samplesPerSecond: 25
+  maxDuration: 20
+  onChanged:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!224 &888636339 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 8072890477496077224, guid: 085ce58b196caa446a8545c9dd388793, type: 3}
@@ -13952,6 +13984,10 @@ MonoBehaviour:
       was it going when it hit?
   - label: Heavier + higher
     prompt: Make the ball twice as heavy and drop it from higher.
+  - label: Energy graph
+    prompt: Drop a ball from 3 meters and graph its energy as it falls.
+  - label: Explain the graph
+    prompt: Read the measurement and explain what the graph shows.
   - label: Moon gravity
     prompt: Switch to Moon gravity and drop a ball from 2 meters.
   - label: Back to Earth
@@ -13965,6 +14001,9 @@ MonoBehaviour:
   showReleaseButton: 1
   releaseTool: {fileID: 0}
   releaseButtonColor: {r: 0.16, g: 0.55, b: 0.3, a: 1}
+  showGraph: 1
+  showTypedInput: 1
+  typedInputDesktopOnly: 1
   movable: 1
   buttonColor: {r: 0.2, g: 0.36, b: 0.62, a: 1}
   textColor: {r: 1, g: 1, b: 1, a: 1}
