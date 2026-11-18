@@ -85,3 +85,6 @@ crashlytics-build.properties
 
 # Burst debug symbols written next to builds
 *_BurstDebugInformation_DoNotShip/
+
+# IL2CPP debug files Unity writes next to Android builds
+*_BackUpThisFolder_ButDontShipItWithYourGame/

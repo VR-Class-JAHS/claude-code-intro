@@ -23,4 +23,5 @@ A Unity VR physics lab (Meta Quest 3/3S) where a Claude-powered assistant sets u
 ## Never commit
 - `vr-lab-proxy/.env` (API key and proxy token; the file must be named `.env` with the dot).
 - `Assets/ClaudeLab/Settings/Resources/ClaudeProxySettings.asset` (holds the token; gitignored). Each computer has its own; code loads it by name, so scenes never link to it.
-- Builds (`*.apk`) and `*_BurstDebugInformation_DoNotShip/` (both gitignored).
+- Builds (`*.apk`), `*_BurstDebugInformation_DoNotShip/` and `*_BackUpThisFolder_ButDontShipItWithYourGame/` (all gitignored).
+- Settings files a build rewrites without a real change: the URP configs (line endings), `SampleScene.scenetemplate`, `OpenXRPackageSettings.asset` (it holds two copies of some Android XR features, and builds swap which one the list points to; keep *Android XR Support* off for Quest), and *Preloaded Assets* in `ProjectSettings.asset` (XR settings that builds add and remove).
