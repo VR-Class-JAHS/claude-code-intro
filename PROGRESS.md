@@ -9,6 +9,20 @@ Last updated: 2026-11-17
 - `SampleScene` already contains the **Claude Lab Assistant** object.
 - Player Settings → *Allow downloads over HTTP* = Always allowed (the proxy uses plain http).
 
+## Written, not yet tested in Unity
+
+- **Prompt panel** (`Scripts/ClaudeLabPanel.cs`, `Editor/ClaudeLabPanelSetup.cs`): menu **Claude Lab → Add Prompt Panel to Scene** builds a world-space canvas to the left of the spawn area. It has preset prompt buttons (edit the *Presets* list, then ⋮ → *Rebuild Buttons*), a reply box, a status line, and a *New conversation* button. Buttons are disabled while Claude is working. To test: run the menu item, press Play, click a button with the mouse or XR simulator.
+- **New tools** (`Scripts/Tools/`):
+  - `measure_object`: height, speed and mass of spawned objects, plus each ball or block's last drop (release height, fall time, impact speed). `FallRecorder`, added to every ball and block, records drops every physics step, including when a student grabs an object and lets go. That matters because Claude's calls arrive after the object has landed.
+  - `lab_timer`: start, stop, reset, read. Shown on the panel's Timer line.
+  - `set_gravity`: Earth, Moon, Mars, Jupiter, zero, or a number up to 30 m/s². Restored when Play mode ends.
+  - To add them to the existing assistant in `SampleScene`, run **Claude Lab → Add Lab Assistant to Scene** again: it now adds any missing tools, then save the scene. Do this *before* adding the prompt panel so the panel's Timer line gets connected.
+- **Proxy settings link**: `SampleScene` points to a `ClaudeProxySettings` asset that only existed on the old computer. **Claude Lab → Select Proxy Settings** now reconnects the new asset to the assistant automatically. Save the scene afterwards.
+
+## Setup gotcha
+
+- The keys file must be named `.env` (with the dot). A file named `env` is not read by the proxy and is not ignored by git.
+
 ## Not in git (recreate on a new computer)
 
 | What | Where | How to recreate |

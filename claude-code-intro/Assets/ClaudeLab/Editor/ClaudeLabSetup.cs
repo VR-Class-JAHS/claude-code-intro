@@ -24,7 +24,11 @@ namespace ClaudeLab.EditorTools
             if (existing != null)
             {
                 Selection.activeGameObject = existing.gameObject;
-                Debug.Log("[Claude Lab] This scene already has a ClaudeAgent; selected it.", existing);
+                AssignSettingsIfMissing(existing, settings);
+                int added = AddMissingTools(existing.gameObject);
+                Debug.Log(added > 0
+                    ? $"[Claude Lab] This scene already has a ClaudeAgent; added {added} new tool(s) to it."
+                    : "[Claude Lab] This scene already has a ClaudeAgent with every tool; selected it.", existing);
                 return;
             }
 
@@ -43,20 +47,52 @@ namespace ClaudeLab.EditorTools
             }
 
             var agent = go.AddComponent<ClaudeAgent>();
-            go.AddComponent<SpawnObjectTool>();
-            go.AddComponent<ClearLabTool>();
+            AddMissingTools(go);
             go.AddComponent<ClaudeTestPrompt>().agent = agent;
-
-            var so = new SerializedObject(agent);
-            so.FindProperty("settings").objectReferenceValue = settings;
-            so.ApplyModifiedPropertiesWithoutUndo();
+            AssignSettingsIfMissing(agent, settings);
 
             Selection.activeGameObject = go;
             Debug.Log("[Claude Lab] Added Claude Lab Assistant. Start vr-lab-proxy, press Play, then press T.", go);
         }
 
         [MenuItem("Claude Lab/Select Proxy Settings")]
-        static void SelectSettings() => Selection.activeObject = FindOrCreateSettings();
+        static void SelectSettings()
+        {
+            var settings = FindOrCreateSettings();
+            // On a new computer the settings asset is recreated with a new ID, so the scene's link to it is broken.
+            foreach (var agent in Object.FindObjectsByType<ClaudeAgent>(FindObjectsSortMode.None))
+                AssignSettingsIfMissing(agent, settings);
+            Selection.activeObject = settings;
+        }
+
+        static void AssignSettingsIfMissing(ClaudeAgent agent, ClaudeProxySettings settings)
+        {
+            var so = new SerializedObject(agent);
+            var prop = so.FindProperty("settings");
+            if (prop.objectReferenceValue != null) return;
+            prop.objectReferenceValue = settings;
+            so.ApplyModifiedProperties(); // records Undo and marks the scene dirty
+            Debug.Log("[Claude Lab] Connected the proxy settings to the Claude Lab Assistant. Save the scene.", agent);
+        }
+
+        // Every lab tool the assistant should have. New tools go here.
+        static readonly System.Type[] ToolTypes =
+        {
+            typeof(SpawnObjectTool), typeof(ClearLabTool), typeof(MeasureObjectTool),
+            typeof(LabTimerTool), typeof(SetGravityTool),
+        };
+
+        static int AddMissingTools(GameObject go)
+        {
+            int added = 0;
+            foreach (var type in ToolTypes)
+            {
+                if (go.GetComponentInChildren(type) != null) continue;
+                Undo.AddComponent(go, type);
+                added++;
+            }
+            return added;
+        }
 
         static ClaudeProxySettings FindOrCreateSettings()
         {
