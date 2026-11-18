@@ -15,6 +15,7 @@ A Unity VR physics lab (Meta Quest 3/3S) where a Claude-powered assistant sets u
 
 ## How we work
 - One branch and pull request per piece of work; the user merges. Commit or push only when asked.
+- Create branches with `--no-track` (e.g. `git switch -c <name> --no-track origin/main`) so they have no upstream and GitHub Desktop offers to publish them as new branches.
 - The user tests every change in Play mode (XR Interaction Simulator) and on the Quest before merging. Say plainly what has and hasn't been tested.
 - Check what a PR actually contains before calling work merged (one commit once landed after its PR was merged).
 - Unity rewrites scene and settings files. Before committing, look at what changed and leave out unrelated churn: `ProjectSettings/ProjectSettings.asset` and `UnityConnectSettings.asset` changes that clear the Unity Cloud link, line-ending-only changes, the TextMesh Pro fallback font asset, an empty `Assets/Resources` folder.
