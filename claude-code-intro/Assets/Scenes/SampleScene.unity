@@ -9428,6 +9428,7 @@ GameObject:
   - component: {fileID: 884547662}
   - component: {fileID: 884547661}
   - component: {fileID: 884547660}
+  - component: {fileID: 884547663}
   m_Layer: 0
   m_Name: Claude Lab Assistant
   m_TagString: Untagged
@@ -9509,6 +9510,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   logToConsole: 1
+  discovery: {fileID: 0}
 --- !u!4 &884547659
 Transform:
   m_ObjectHideFlags: 0
@@ -9563,6 +9565,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClaudeLab.MeasureObjectTool
   spawner: {fileID: 0}
+--- !u!114 &884547663
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 884547654}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01e48267a6460d540a0a498cd37944c7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClaudeLab.ProxyDiscovery
+  settings: {fileID: 0}
+  listenInEditor: 0
+  maxClockDifferenceSeconds: 300
 --- !u!224 &888636339 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 8072890477496077224, guid: 085ce58b196caa446a8545c9dd388793, type: 3}

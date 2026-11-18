@@ -5,7 +5,7 @@ Last updated: 2026-11-17
 ## Working now
 
 - **vr-lab-proxy/**: FastAPI server that holds the Anthropic API key. Tested: `/health`, `/chat`, a wrong token returns 401, and a two-round `spawn_object` tool exchange.
-- **Unity client** (`claude-code-intro/Assets/ClaudeLab/`): `ClaudeAgent` runs the tool loop through the proxy. Tools: `spawn_object` (ball, block, pendulum, ramp) and `clear_lab`. Tested in Play mode in `SampleScene`: pressing **T** spawns a ball and a block that fall. **R** clears the lab.
+- **Unity client** (`claude-code-intro/Assets/ClaudeLab/`): `ClaudeAgent` runs the tool loop through the proxy. Tools: `spawn_object` (ball, block, pendulum, ramp) and `clear_lab`. Tested in Play mode in `SampleScene`: pressing **T** spawns a ball and a block that fall. **R** clears the lab. Pendulum and ramp also checked in Play mode (2026-11-17).
 - `SampleScene` already contains the **Claude Lab Assistant** object.
 - Player Settings → *Allow downloads over HTTP* = Always allowed (the proxy uses plain http).
 
@@ -51,4 +51,3 @@ Last updated: 2026-11-17
 - Check each new tool on its own: measure_object after a student drop, lab_timer, set_gravity on Moon and zero.
 - Finish the first headset build and test (headset was out of battery).
 - Check whether school Wi-Fi passes UDP broadcasts and device-to-device traffic; if not, look at a hotspot or a dedicated router for the cart.
-- Check the pendulum and ramp visually. Only the ball and block have been tested in Play mode.
