@@ -1,6 +1,19 @@
 # VR Lab + Claude: where we are
 
-Last updated: 2026-11-17
+Last updated: 2026-11-18
+
+## Next session (start here)
+
+Week 1 of the project plan is done (all five sessions ticked). Picking up on the school computer:
+
+1. Install **Unity 6000.3.28f1** with Android Build Support in Unity Hub (the project was upgraded from 23f1 on 2026-11-17).
+2. Pull `main`, open `claude-code-intro/` in Unity and let it rebuild its library.
+3. The school computer already has `vr-lab-proxy/.env`, `.venv` and the proxy settings asset from 2026-11-17. If Unity says the assistant has no proxy settings, run **Claude Lab → Select Proxy Settings** and save the scene.
+4. Start the proxy with `--host 0.0.0.0` (see Start a session). For the headset to reach it, add the firewall rule from `vr-lab-proxy/README.md` (admin PowerShell, once per computer).
+5. Dev log: the plan's 2026-11-17 school row is missing the details of that afternoon's Claude Code session on the school computer (the Unity agent loop and first tools). Find that session in the Code tab and fill in *Where Claude Code helped* and *Where I stepped in*.
+6. Next build: **measurement graphs** (Weeks 2–3). Needs a `start_measurement` tool that records readings over time, and a chart on the panel. `measure_object` and `get_scene_state` already give one-off readings.
+
+Open questions: whether school Wi-Fi passes the proxy's UDP broadcasts and lets headsets reach the computer (see Ideas).
 
 ## Working now
 
@@ -21,7 +34,7 @@ Last updated: 2026-11-17
 
 ## Headset setup (2026-11-17, Meta Quest 3/3S)
 
-- **Auto-discovery** (`vr-lab-proxy/discovery.py`, `Scripts/ProxyDiscovery.cs`): the proxy broadcasts a signed "I'm here" on UDP 47800 every 2 s; the headset connects to whichever computer sent it, so one build works on any network where broadcasts get through. Falls back to `proxyUrl` in the settings asset. Tested: announcements received and verified on this laptop; a wrong token is rejected. **Not yet tested on the headset.** Run **Claude Lab → Add Lab Assistant to Scene** once to add the `ProxyDiscovery` component, then save the scene.
+- **Auto-discovery** (`vr-lab-proxy/discovery.py`, `Scripts/ProxyDiscovery.cs`): the proxy broadcasts a signed "I'm here" on UDP 47800 every 2 s; the headset connects to whichever computer sent it, so one build works on any network where broadcasts get through. Falls back to `proxyUrl` in the settings asset. Tested: announcements received and verified on this laptop; a wrong token is rejected. On the Quest 3S the app reached the proxy on home Wi-Fi, but it isn't confirmed whether through discovery or the `proxyUrl` fallback (both pointed at the same laptop). Run **Claude Lab → Add Lab Assistant to Scene** once to add the `ProxyDiscovery` component, then save the scene.
 - Proxy must run with `--host 0.0.0.0` (see Start a session).
 - Firewall: inbound TCP 8000 allowed from the local subnet (rule *VR Lab proxy (port 8000)*, added on this laptop). Needed on every computer that runs the proxy.
 - Build: Android Build Support module, Build Profiles → Android → Switch Platform, Run Device = Quest, Project Validation → Fix All, Build and Run.
@@ -31,7 +44,9 @@ Last updated: 2026-11-17
 - **Panel starting spot** (tested 2026-11-17): new panels go about 45° to the left, 1.1 m away. **Claude Lab → Reset Prompt Panel Position** moves an existing panel there (then save the scene). The spawn row now fills from the middle outward, right side first, so the first objects land straight ahead.
 - **Purple objects in builds fixed**: spawned shapes use `Assets/ClaudeLab/Materials/LabObject.mat` (URP Lit), assigned to the spawn tool's *Object Material* by **Claude Lab → Add Lab Assistant to Scene**. Tested on the Quest 3S.
 
-- **Session 4 tools** (tested in Play mode 2026-11-17): `get_scene_state` lists every object (type, mass, height, position, speed, waiting/falling/resting, friction, bounciness) plus gravity and the timer. `set_property` changes an existing object's mass, height, velocity (with direction; a waiting object launches on Release), friction or bounciness. Simulated through the proxy: "make the ball twice as heavy and drop it from higher" chains get_scene_state -> mass 2 -> height 3, then asks the student to press Release. Run **Claude Lab -> Add Lab Assistant to Scene** to add them.
+- **Session 4 tools** (tested in Play mode and on the Quest 3S, 2026-11-17): `get_scene_state` lists every object (type, mass, height, position, speed, waiting/falling/resting, friction, bounciness) plus gravity and the timer. `set_property` changes an existing object's mass, height, velocity (with direction; a waiting object launches on Release), friction or bounciness. Simulated through the proxy: "make the ball twice as heavy and drop it from higher" chains get_scene_state -> mass 2 -> height 3, then asks the student to press Release. Run **Claude Lab -> Add Lab Assistant to Scene** to add them.
+
+- **Typed input** (tested in Play mode 2026-11-17): a text box and Send button under the reply (`Scripts/TypedPromptInput.cs`, added at Play time). Enter also sends. Shown in the Editor and desktop builds, hidden on the Quest (*Typed Input Desktop Only* on the panel). While the box has focus the Input System keyboard is paused so typed letters don't drive the XR simulator. Covers Week 1 session 2's text box.
 
 ## Setup gotcha
 
@@ -56,5 +71,4 @@ Last updated: 2026-11-17
 - Voice input, so students can ask their own questions instead of only the preset buttons.
 - Show the panel near the student wherever they stand (follow or summon it).
 - Check each new tool on its own: measure_object after a student drop, lab_timer, set_gravity on Moon and zero.
-- Finish the first headset build and test (headset was out of battery).
 - Check whether school Wi-Fi passes UDP broadcasts and device-to-device traffic; if not, look at a hotspot or a dedicated router for the cart.

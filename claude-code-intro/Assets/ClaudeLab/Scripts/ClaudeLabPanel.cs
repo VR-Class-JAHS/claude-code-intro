@@ -49,6 +49,12 @@ namespace ClaudeLab
         public ReleaseObjectsTool releaseTool;
         public Color releaseButtonColor = new Color(0.16f, 0.55f, 0.30f);
 
+        [Header("Typed input")]
+        [Tooltip("Adds a text box and Send button under the reply, for typing any request.")]
+        public bool showTypedInput = true;
+        [Tooltip("Hide the text box on headsets and phones, where typing isn't practical. It still shows in the Editor and desktop builds.")]
+        public bool typedInputDesktopOnly = true;
+
         [Header("Moving")]
         [Tooltip("Adds a 'Grab here to move' bar at the bottom so students can drag the panel out of the way.")]
         public bool movable = true;
@@ -65,6 +71,10 @@ namespace ClaudeLab
         {
             if (agent == null) agent = FindFirstObjectByType<ClaudeAgent>();
             RebuildButtons();
+            // Before PanelMover: it sizes its grab bar after the panel's layout, which this row changes.
+            bool typingPractical = Application.isEditor || !Application.isMobilePlatform;
+            if (showTypedInput && (typingPractical || !typedInputDesktopOnly) && GetComponent<TypedPromptInput>() == null)
+                gameObject.AddComponent<TypedPromptInput>();
             if (movable && GetComponent<PanelMover>() == null)
                 gameObject.AddComponent<PanelMover>();
             if (newConversationButton != null)
@@ -90,15 +100,19 @@ namespace ClaudeLab
             agent.onBusyChanged.RemoveListener(ShowBusy);
         }
 
-        public void Ask(Preset preset)
+        public void Ask(Preset preset) => AskText(preset.prompt);
+
+        /// <summary>Send any text to Claude, as if it were a preset. Used by the preset buttons and the typed-input box.</summary>
+        public void AskText(string text)
         {
+            if (string.IsNullOrWhiteSpace(text)) return;
             if (agent == null)
             {
                 ShowError("No Claude Lab Assistant in the scene.");
                 return;
             }
-            SetStatus($"You asked: {preset.prompt}");
-            agent.Ask(preset.prompt);
+            SetStatus($"You asked: {text}");
+            agent.Ask(text);
         }
 
         public void Release()
