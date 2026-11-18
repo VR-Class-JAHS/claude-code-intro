@@ -13950,6 +13950,8 @@ MonoBehaviour:
   - label: How fast did it hit?
     prompt: Measure the objects. How long did each one take to fall, and how fast
       was it going when it hit?
+  - label: Heavier + higher
+    prompt: Make the ball twice as heavy and drop it from higher.
   - label: Moon gravity
     prompt: Switch to Moon gravity and drop a ball from 2 meters.
   - label: Back to Earth
