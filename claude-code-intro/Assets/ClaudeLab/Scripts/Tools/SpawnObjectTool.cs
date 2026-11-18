@@ -38,7 +38,7 @@ namespace ClaudeLab
         Transform _container;
         int _spawnIndex;
 
-        Transform SpawnArea => spawnArea != null ? spawnArea : transform;
+        public Transform SpawnArea =>spawnArea != null ? spawnArea : transform;
 
         public override string ToolName => "spawn_object";
 
@@ -180,6 +180,9 @@ namespace ClaudeLab
             body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
             if (grabbable && makeGrabbable)
                 go.AddComponent<XRGrabInteractable>();
+            // Balls and blocks record each drop so measure_object can report fall time and impact speed.
+            if (grabbable)
+                go.AddComponent<FallRecorder>().floorY = SpawnArea.position.y;
             return body;
         }
     }
