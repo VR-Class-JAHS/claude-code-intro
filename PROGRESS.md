@@ -33,6 +33,8 @@ Last updated: 2026-11-17
 
 - **Session 4 tools** (tested in Play mode 2026-11-17): `get_scene_state` lists every object (type, mass, height, position, speed, waiting/falling/resting, friction, bounciness) plus gravity and the timer. `set_property` changes an existing object's mass, height, velocity (with direction; a waiting object launches on Release), friction or bounciness. Simulated through the proxy: "make the ball twice as heavy and drop it from higher" chains get_scene_state -> mass 2 -> height 3, then asks the student to press Release. Run **Claude Lab -> Add Lab Assistant to Scene** to add them.
 
+- **Typed input** (tested in Play mode 2026-11-17): a text box and Send button under the reply (`Scripts/TypedPromptInput.cs`, added at Play time). Enter also sends. Shown in the Editor and desktop builds, hidden on the Quest (*Typed Input Desktop Only* on the panel). While the box has focus the Input System keyboard is paused so typed letters don't drive the XR simulator. Covers Week 1 session 2's text box.
+
 ## Setup gotcha
 
 - The keys file must be named `.env` (with the dot). A file named `env` is not read by the proxy and is not ignored by git.
