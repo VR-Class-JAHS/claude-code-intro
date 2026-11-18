@@ -7,25 +7,38 @@ namespace ClaudeLab.EditorTools
 {
     /// <summary>
     /// Menu: Claude Lab > Add Lab Assistant to Scene.
-    /// Creates (or finds) the proxy settings asset, fills in the token from ../vr-lab-proxy/.env if present,
-    /// and adds a ready-wired "Claude Lab Assistant" object in front of the camera.
+    /// Creates (or finds) the proxy settings asset in Assets/ClaudeLab/Settings/Resources, fills in the token
+    /// from ../vr-lab-proxy/.env if present, and adds a ready-wired "Claude Lab Assistant" object in front of the camera.
     /// </summary>
+    [InitializeOnLoad]
     public static class ClaudeLabSetup
     {
-        const string SettingsFolder = "Assets/ClaudeLab/Settings";
-        const string SettingsPath = SettingsFolder + "/ClaudeProxySettings.asset";
+        // Inside a Resources folder so ClaudeProxySettings.Load() finds it by name at runtime.
+        // Scenes never link to it, so each computer's own copy (gitignored, holds the token) just works.
+        const string SettingsParent = "Assets/ClaudeLab/Settings";
+        const string SettingsFolder = SettingsParent + "/Resources";
+        const string SettingsPath = SettingsFolder + "/" + ClaudeProxySettings.ResourceName + ".asset";
         const string ObjectMaterialPath = "Assets/ClaudeLab/Materials/LabObject.mat";
+
+        // When the Editor opens or scripts reload, move a settings asset made before 2026-11-18
+        // (it lived in Assets/ClaudeLab/Settings) into the Resources folder.
+        static ClaudeLabSetup()
+        {
+            EditorApplication.delayCall += () =>
+            {
+                if (!EditorApplication.isPlayingOrWillChangePlaymode) MoveSettingsIntoResources();
+            };
+        }
 
         [MenuItem("Claude Lab/Add Lab Assistant to Scene")]
         static void AddToScene()
         {
-            var settings = FindOrCreateSettings();
+            FindOrCreateSettings();
 
             var existing = Object.FindFirstObjectByType<ClaudeAgent>();
             if (existing != null)
             {
                 Selection.activeGameObject = existing.gameObject;
-                AssignSettingsIfMissing(existing, settings);
                 int added = AddMissingTools(existing.gameObject);
                 Debug.Log(added > 0
                     ? $"[Claude Lab] This scene already has a ClaudeAgent; added {added} new tool(s) to it."
@@ -50,31 +63,13 @@ namespace ClaudeLab.EditorTools
             var agent = go.AddComponent<ClaudeAgent>();
             AddMissingTools(go);
             go.AddComponent<ClaudeTestPrompt>().agent = agent;
-            AssignSettingsIfMissing(agent, settings);
 
             Selection.activeGameObject = go;
             Debug.Log("[Claude Lab] Added Claude Lab Assistant. Start vr-lab-proxy, press Play, then press T.", go);
         }
 
         [MenuItem("Claude Lab/Select Proxy Settings")]
-        static void SelectSettings()
-        {
-            var settings = FindOrCreateSettings();
-            // On a new computer the settings asset is recreated with a new ID, so the scene's link to it is broken.
-            foreach (var agent in Object.FindObjectsByType<ClaudeAgent>(FindObjectsSortMode.None))
-                AssignSettingsIfMissing(agent, settings);
-            Selection.activeObject = settings;
-        }
-
-        static void AssignSettingsIfMissing(ClaudeAgent agent, ClaudeProxySettings settings)
-        {
-            var so = new SerializedObject(agent);
-            var prop = so.FindProperty("settings");
-            if (prop.objectReferenceValue != null) return;
-            prop.objectReferenceValue = settings;
-            so.ApplyModifiedProperties(); // records Undo and marks the scene dirty
-            Debug.Log("[Claude Lab] Connected the proxy settings to the Claude Lab Assistant. Save the scene.", agent);
-        }
+        static void SelectSettings() => Selection.activeObject = FindOrCreateSettings();
 
         // Every lab tool the assistant should have. New tools go here.
         static readonly System.Type[] ToolTypes =
@@ -122,11 +117,10 @@ namespace ClaudeLab.EditorTools
 
         static ClaudeProxySettings FindOrCreateSettings()
         {
-            var guid = AssetDatabase.FindAssets("t:ClaudeProxySettings").FirstOrDefault();
-            if (guid != null)
-                return AssetDatabase.LoadAssetAtPath<ClaudeProxySettings>(AssetDatabase.GUIDToAssetPath(guid));
+            var existing = MoveSettingsIntoResources();
+            if (existing != null) return existing;
 
-            Directory.CreateDirectory(SettingsFolder);
+            EnsureSettingsFolder();
             var settings = ScriptableObject.CreateInstance<ClaudeProxySettings>();
             settings.proxyToken = ReadTokenFromProxyEnv() ?? "";
             AssetDatabase.CreateAsset(settings, SettingsPath);
@@ -137,6 +131,41 @@ namespace ClaudeLab.EditorTools
             else
                 Debug.Log($"[Claude Lab] Created {SettingsPath} with the token from vr-lab-proxy/.env.", settings);
             return settings;
+        }
+
+        /// <summary>
+        /// Returns this computer's settings asset, moving it into the Resources folder first if it's elsewhere.
+        /// Null if there is none yet. Moving keeps its contents (token included).
+        /// </summary>
+        static ClaudeProxySettings MoveSettingsIntoResources()
+        {
+            var atPath = AssetDatabase.LoadAssetAtPath<ClaudeProxySettings>(SettingsPath);
+            if (atPath != null) return atPath;
+
+            string oldPath = AssetDatabase.FindAssets("t:ClaudeProxySettings")
+                .Select(AssetDatabase.GUIDToAssetPath)
+                .FirstOrDefault(p => p.EndsWith(".asset"));
+            if (oldPath == null) return null;
+
+            EnsureSettingsFolder();
+            string error = AssetDatabase.MoveAsset(oldPath, SettingsPath);
+            if (!string.IsNullOrEmpty(error))
+            {
+                Debug.LogWarning($"[Claude Lab] Couldn't move {oldPath} to {SettingsPath}: {error}. Move it there by hand " +
+                                 "so the assistant can find it.");
+                return AssetDatabase.LoadAssetAtPath<ClaudeProxySettings>(oldPath);
+            }
+            Debug.Log($"[Claude Lab] Moved the proxy settings to {SettingsPath}. Scenes no longer link to it, " +
+                      "so it works on every computer without reconnecting.");
+            return AssetDatabase.LoadAssetAtPath<ClaudeProxySettings>(SettingsPath);
+        }
+
+        static void EnsureSettingsFolder()
+        {
+            if (!AssetDatabase.IsValidFolder(SettingsParent))
+                AssetDatabase.CreateFolder("Assets/ClaudeLab", "Settings");
+            if (!AssetDatabase.IsValidFolder(SettingsFolder))
+                AssetDatabase.CreateFolder(SettingsParent, "Resources");
         }
 
         // The Unity project and vr-lab-proxy sit side by side in this repo.

@@ -76,9 +76,12 @@ crashlytics-build.properties
 
 .venv/
 
-# Claude Lab: holds the proxy token
+# Claude Lab: holds the proxy token. Each computer has its own copy in Settings/Resources,
+# loaded by name at runtime. The first two lines cover copies made before 2026-11-18.
 /[Aa]ssets/ClaudeLab/Settings/ClaudeProxySettings.asset
 /[Aa]ssets/ClaudeLab/Settings/ClaudeProxySettings.asset.meta
+/[Aa]ssets/ClaudeLab/Settings/Resources/
+/[Aa]ssets/ClaudeLab/Settings/Resources.meta
 
 # Burst debug symbols written next to builds
 *_BurstDebugInformation_DoNotShip/

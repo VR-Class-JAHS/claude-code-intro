@@ -4,11 +4,18 @@ namespace ClaudeLab
 {
     /// <summary>
     /// Where the proxy lives and how the lab assistant behaves.
-    /// The asset holding these values contains the proxy token, so it is gitignored.
+    /// The asset holding these values contains the proxy token, so it is gitignored. It lives at
+    /// Assets/ClaudeLab/Settings/Resources/ClaudeProxySettings.asset and is loaded by name at runtime,
+    /// so scenes never store a link to it: each computer keeps its own copy without breaking the scene.
     /// </summary>
-    [CreateAssetMenu(fileName = "ClaudeProxySettings", menuName = "Claude Lab/Proxy Settings")]
+    [CreateAssetMenu(fileName = ResourceName, menuName = "Claude Lab/Proxy Settings")]
     public class ClaudeProxySettings : ScriptableObject
     {
+        public const string ResourceName = "ClaudeProxySettings";
+
+        /// <summary>This computer's settings asset, or null if it hasn't been created yet.</summary>
+        public static ClaudeProxySettings Load() => Resources.Load<ClaudeProxySettings>(ResourceName);
+
         [Tooltip("Base URL of vr-lab-proxy. Use http://localhost:8000 in the editor, " +
                  "or http://<your computer's IP>:8000 on a standalone headset.")]
         public string proxyUrl = "http://localhost:8000";
