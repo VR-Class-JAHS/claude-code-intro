@@ -41,6 +41,17 @@ namespace ClaudeLab
         public RectTransform buttonContainer;
         public Button newConversationButton;
 
+        [Header("Release button")]
+        [Tooltip("A button that drops every ball and block waiting in mid-air, all at once.")]
+        public bool showReleaseButton = true;
+        [Tooltip("Defaults to the ReleaseObjectsTool in the scene.")]
+        public ReleaseObjectsTool releaseTool;
+        public Color releaseButtonColor = new Color(0.16f, 0.55f, 0.30f);
+
+        [Header("Moving")]
+        [Tooltip("Adds a 'Grab here to move' bar at the bottom so students can drag the panel out of the way.")]
+        public bool movable = true;
+
         [Header("Look")]
         public Color buttonColor = new Color(0.20f, 0.36f, 0.62f);
         public Color textColor = Color.white;
@@ -53,6 +64,8 @@ namespace ClaudeLab
         {
             if (agent == null) agent = FindFirstObjectByType<ClaudeAgent>();
             RebuildButtons();
+            if (movable && GetComponent<PanelMover>() == null)
+                gameObject.AddComponent<PanelMover>();
             if (newConversationButton != null)
                 newConversationButton.onClick.AddListener(NewConversation);
             SetStatus("Press a button to ask Claude.");
@@ -87,6 +100,20 @@ namespace ClaudeLab
             agent.Ask(preset.prompt);
         }
 
+        public void Release()
+        {
+            if (releaseTool == null) releaseTool = FindFirstObjectByType<ReleaseObjectsTool>();
+            if (releaseTool == null)
+            {
+                ShowError("No release tool in the scene. Run Claude Lab → Add Lab Assistant to Scene.");
+                return;
+            }
+            int count = releaseTool.ReleaseAll();
+            SetStatus(count == 0
+                ? "Nothing is waiting to be released."
+                : $"Released {count} object{(count == 1 ? "" : "s")}. Watch them fall!");
+        }
+
         public void NewConversation()
         {
             if (agent == null || agent.IsBusy) return;
@@ -108,6 +135,13 @@ namespace ClaudeLab
                 else DestroyImmediate(child);
             }
             _buttons.Clear();
+
+            // Release goes first and stays pressable while Claude is working: it acts right away, without Claude.
+            if (showReleaseButton)
+            {
+                var release = CreateButton(buttonContainer, "Release", releaseButtonColor, textColor, buttonHeight, buttonFontSize);
+                if (Application.isPlaying) release.onClick.AddListener(Release);
+            }
 
             foreach (var preset in presets)
             {
@@ -187,7 +221,11 @@ namespace ClaudeLab
             }
             else
             {
-                SetStatus("Ready. Press another button.");
+                if (releaseTool == null) releaseTool = FindFirstObjectByType<ReleaseObjectsTool>();
+                int waiting = releaseTool != null ? releaseTool.WaitingCount() : 0;
+                SetStatus(waiting > 0
+                    ? $"{waiting} object{(waiting == 1 ? " is" : "s are")} waiting. Press Release when you're ready."
+                    : "Ready. Press another button.");
             }
         }
 

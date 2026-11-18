@@ -18,6 +18,14 @@ namespace ClaudeLab
         [Tooltip("Students can pick up balls and blocks with the XR controllers.")]
         public bool makeGrabbable = true;
 
+        [Tooltip("Balls and blocks wait frozen in mid-air until the student presses Release (or Claude calls " +
+                 "release_objects). Off: they fall the moment they appear.")]
+        public bool holdUntilRelease = true;
+
+        [Tooltip("Material for spawned objects (Assets/ClaudeLab/Materials/LabObject). Needed in builds: shapes made " +
+                 "from code otherwise get a built-in material the URP renderer can't draw, so they show up purple.")]
+        public Material objectMaterial;
+
         [Min(1)] public int maxObjects = 30;
         public float spacing = 0.6f;
         public int perRow = 5;
@@ -44,8 +52,13 @@ namespace ClaudeLab
 
         public override string Description =>
             "Create a physics object in the lab. Objects appear side by side in front of the student. " +
-            "A ball or block is released at height_m and falls under gravity. " +
-            "A pendulum hangs from a pivot at height_m and starts swinging. " +
+            (holdUntilRelease
+                ? "A ball or block appears frozen with its bottom at height_m and waits. It does NOT fall yet: " +
+                  "it falls when the student presses the Release button on their panel (all waiting objects drop together). " +
+                  "Even if the student says 'drop', set the objects up and tell them to press Release when they're ready, " +
+                  "so they can predict and watch. "
+                : "A ball or block appears with its bottom at height_m and falls immediately under gravity. ") +
+            "A pendulum hangs from a pivot at height_m and starts swinging immediately. " +
             "A ramp is a fixed incline whose top edge is at height_m.";
 
         public override JObject InputSchema => JObject.Parse(@"{
@@ -83,16 +96,22 @@ namespace ClaudeLab
             _spawnIndex++;
             go.name = $"{type} #{_spawnIndex}";
             string extra = type == "ramp" ? $", angle {angle:0.#} deg" : $", mass {mass:0.##} kg";
-            return ToolResult.Ok($"Spawned {go.name} at height {height:0.##} m{extra}.");
+            string state = type == "ball" || type == "block"
+                ? (holdUntilRelease ? " It is waiting for the student to press Release." : " It is falling now.")
+                : "";
+            return ToolResult.Ok($"Spawned {go.name} at height {height:0.##} m{extra}.{state}");
         }
 
         Vector3 NextFloorPoint()
         {
             Transform area = SpawnArea;
             int i = Container.childCount;
-            int col = i % perRow;
+            int slot = i % perRow;
             int row = i / perRow;
-            float x = (col - (perRow - 1) / 2f) * spacing;
+            // Fill each row from the middle outward, right side first: 0, +1, -1, +2, -2 ...
+            // so the first objects land straight ahead, away from the panel on the left.
+            int steps = (slot + 1) / 2;
+            float x = (slot % 2 == 1 ? steps : -steps) * spacing;
             float z = row * spacing;
             return area.position + area.right * x + area.forward * z;
         }
@@ -169,7 +188,13 @@ namespace ClaudeLab
             go.transform.SetParent(parent != null ? parent : Container, true);
             go.transform.SetPositionAndRotation(position, SpawnArea.rotation);
             go.transform.localScale = scale;
-            go.GetComponent<Renderer>().material.color = color;
+            var renderer = go.GetComponent<Renderer>();
+            if (objectMaterial != null)
+                renderer.sharedMaterial = objectMaterial;
+            else
+                Debug.LogWarning("[SpawnObjectTool] No Object Material assigned; spawned objects may be purple in builds. " +
+                                 "Run Claude Lab → Add Lab Assistant to Scene to assign it.", this);
+            renderer.material.color = color; // per-object copy of the material, tinted
             return go;
         }
 
@@ -182,7 +207,11 @@ namespace ClaudeLab
                 go.AddComponent<XRGrabInteractable>();
             // Balls and blocks record each drop so measure_object can report fall time and impact speed.
             if (grabbable)
-                go.AddComponent<FallRecorder>().floorY = SpawnArea.position.y;
+            {
+                var recorder = go.AddComponent<FallRecorder>();
+                recorder.floorY = SpawnArea.position.y;
+                recorder.startWaiting = holdUntilRelease;
+            }
             return body;
         }
     }

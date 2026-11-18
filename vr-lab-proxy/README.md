@@ -12,6 +12,20 @@ uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
 `--host 0.0.0.0` lets a standalone headset on the same Wi-Fi reach it at `http://<your-computer's-IP>:8000`. In the editor, `http://localhost:8000` works.
 
+Windows blocks incoming connections on Public networks, so allow port 8000 once (admin PowerShell):
+
+```powershell
+New-NetFirewallRule -DisplayName "VR Lab proxy (port 8000)" -Direction Inbound -Protocol TCP -LocalPort 8000 -RemoteAddress LocalSubnet -Action Allow
+```
+
+## Auto-discovery
+
+While running, the proxy broadcasts a small signed announcement on UDP port 47800 every 2 seconds (`discovery.py`). The Unity `ProxyDiscovery` component listens for it and connects to whichever computer sent it, so headset builds don't need the IP address typed in, and keep working when the address changes.
+
+- The announcement is signed with `PROXY_TOKEN` (HMAC-SHA256) and never contains the token. Headsets ignore announcements with a wrong signature, a mismatched sender address, or an old timestamp.
+- If the network drops broadcasts (some school Wi-Fi does), headsets fall back to `proxyUrl` in the Unity settings asset.
+- `PROXY_PORT` in `.env` must match uvicorn's `--port` if you change it from 8000. `ANNOUNCE=0` turns announcements off.
+
 ## Test it (session 1 "done")
 
 ```bash
