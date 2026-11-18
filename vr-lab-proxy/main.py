@@ -7,11 +7,14 @@ The agent loop (running tools, sending tool_result back) stays in Unity.
 """
 
 import os
+from contextlib import asynccontextmanager
 
 import anthropic
 from dotenv import load_dotenv
 from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel
+
+from discovery import DISCOVERY_PORT, local_ipv4_addresses, start_announcer
 
 load_dotenv()
 
@@ -19,9 +22,25 @@ API_KEY = os.environ["ANTHROPIC_API_KEY"]
 PROXY_TOKEN = os.environ["PROXY_TOKEN"]  # shared secret so strangers can't use your key
 MODEL = os.environ.get("CLAUDE_MODEL", "claude-sonnet-5-5")
 MAX_TOKENS = int(os.environ.get("MAX_TOKENS", "1024"))
+# Must match the --port uvicorn runs on; headsets use it to reach this server.
+PORT = int(os.environ.get("PROXY_PORT", "8000"))
+ANNOUNCE = os.environ.get("ANNOUNCE", "1") != "0"  # set ANNOUNCE=0 to turn off auto-discovery
 
 client = anthropic.Anthropic(api_key=API_KEY)
-app = FastAPI(title="VR Lab Claude Proxy")
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    stop = start_announcer(PROXY_TOKEN, PORT) if ANNOUNCE else None
+    if stop:
+        print(f"Announcing on UDP {DISCOVERY_PORT} so headsets can find this proxy "
+              f"(port {PORT}, addresses: {', '.join(local_ipv4_addresses()) or 'none found'}).")
+    yield
+    if stop:
+        stop.set()
+
+
+app = FastAPI(title="VR Lab Claude Proxy", lifespan=lifespan)
 
 
 class ChatRequest(BaseModel):

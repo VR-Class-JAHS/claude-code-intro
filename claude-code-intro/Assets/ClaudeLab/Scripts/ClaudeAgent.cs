@@ -37,10 +37,17 @@ namespace ClaudeLab
         public bool IsBusy => _busy;
         public ClaudeProxySettings Settings => settings;
 
+        [Tooltip("Optional. Finds the proxy on the Wi-Fi; falls back to the settings' proxyUrl. Defaults to one on this GameObject.")]
+        [SerializeField] ProxyDiscovery discovery;
+
+        /// <summary>The proxy address in use: the one found on the network, else proxyUrl from settings.</summary>
+        public string ProxyUrl => (discovery != null ? discovery.DiscoveredUrl : null) ?? settings.proxyUrl;
+
         void Awake()
         {
             if (tools.Count == 0)
                 tools.AddRange(GetComponentsInChildren<LabTool>());
+            if (discovery == null) discovery = GetComponent<ProxyDiscovery>();
         }
 
         /// <summary>Send a student's message. Ignored (with an error event) while a turn is running.</summary>
@@ -165,7 +172,7 @@ namespace ClaudeLab
                 ["messages"] = _messages,
             };
 
-            string url = settings.proxyUrl.TrimEnd('/') + "/chat";
+            string url = ProxyUrl.TrimEnd('/') + "/chat";
             using var req = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPOST);
             req.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(body.ToString(Formatting.None)));
             req.downloadHandler = new DownloadHandlerBuffer();

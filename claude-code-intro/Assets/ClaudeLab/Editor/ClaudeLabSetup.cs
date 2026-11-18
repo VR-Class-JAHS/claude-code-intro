@@ -91,6 +91,12 @@ namespace ClaudeLab.EditorTools
                 Undo.AddComponent(go, type);
                 added++;
             }
+            // Not a tool, but every assistant should have it: lets the headset find the proxy on the Wi-Fi.
+            if (go.GetComponent<ProxyDiscovery>() == null)
+            {
+                Undo.AddComponent<ProxyDiscovery>(go);
+                added++;
+            }
             return added;
         }
 
