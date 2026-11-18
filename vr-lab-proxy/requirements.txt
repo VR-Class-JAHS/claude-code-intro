@@ -2,3 +2,7 @@ fastapi
 uvicorn
 anthropic
 python-dotenv
+numpy
+# Voice input (speech-to-text on this computer). Needs Python 3.12 or 3.13 for now:
+# its PyAV dependency has no Python 3.15 build yet.
+faster-whisper

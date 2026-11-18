@@ -26,6 +26,15 @@ While running, the proxy broadcasts a small signed announcement on UDP port 4780
 - If the network drops broadcasts (some school Wi-Fi does), headsets fall back to `proxyUrl` in the Unity settings asset.
 - `PROXY_PORT` in `.env` must match uvicorn's `--port` if you change it from 8000. `ANNOUNCE=0` turns announcements off.
 
+## Voice input
+
+`POST /transcribe` (same `X-Proxy-Token` header as `/chat`) takes a 16-bit PCM WAV of up to 20 s and returns `{"text": ...}`. It runs Whisper on this computer with faster-whisper (`speech.py`), so students' recordings never leave it; only the text goes on to Claude. The Unity panel's **Hold to talk** button uses it.
+
+- Needs Python 3.12 or 3.13: faster-whisper's PyAV dependency has no Python 3.15 build yet. Create the environment with `py -3.13 -m venv .venv`.
+- The model (`base.en`, about 145 MB) downloads from Hugging Face the first time the proxy starts, in the background, and is cached in `%USERPROFILE%\.cache\huggingface`. On the classroom network it downloads through the exit node like everything else.
+- `.env` options: `WHISPER_MODEL=tiny.en` (faster) or `small.en` (more accurate); `WHISPER=0` turns voice input off.
+- On a laptop CPU, a few seconds of speech takes about half a second. Requests are handled one at a time, so many students talking at once will queue.
+
 ## Classroom network: Meta router + Tailscale exit node
 
 Tested 2026-11-18 on the school computer with a Quest 3S. In class, the headsets and the proxy computer all join the classroom's Meta router (`NETGEAR_11ac`). That network reaches Meta but blocks `api.anthropic.com`, so the proxy computer sends its internet traffic through a small cloud server (`vr-lab-exit`) with Tailscale:

@@ -51,6 +51,10 @@ namespace ClaudeLab
         public ReleaseObjectsTool releaseTool;
         public Color releaseButtonColor = new Color(0.16f, 0.55f, 0.30f);
 
+        [Header("Voice input")]
+        [Tooltip("Adds a 'Hold to talk' button. The proxy turns the recording into text on its own computer (Whisper).")]
+        public bool showVoiceInput = true;
+
         [Header("Graph")]
         [Tooltip("Adds a graph under the reply that shows start_measurement recordings as they happen.")]
         public bool showGraph = true;
@@ -60,6 +64,10 @@ namespace ClaudeLab
         public bool showTypedInput = true;
         [Tooltip("Hide the text box on headsets and phones, where typing isn't practical. It still shows in the Editor and desktop builds.")]
         public bool typedInputDesktopOnly = true;
+
+        [Header("Exit")]
+        [Tooltip("Adds an 'Exit lab' button beside 'New conversation' (press twice to quit).")]
+        public bool showExitButton = true;
 
         [Header("Moving")]
         [Tooltip("Adds a 'Grab here to move' bar at the bottom so students can drag the panel out of the way.")]
@@ -72,6 +80,7 @@ namespace ClaudeLab
         public float buttonFontSize = 26f;
 
         readonly List<Button> _buttons = new List<Button>();
+        ScrollingReply _scrolling;
 
         void Awake()
         {
@@ -81,10 +90,18 @@ namespace ClaudeLab
             // the text box directly under the reply and the graph below it.
             if (showGraph && GetComponent<MeasurementGraph>() == null)
                 gameObject.AddComponent<MeasurementGraph>();
+            if (showVoiceInput && GetComponent<VoiceInput>() == null)
+                gameObject.AddComponent<VoiceInput>();
             // Before PanelMover: it sizes its grab bar after the panel's layout, which these rows change.
             bool typingPractical = Application.isEditor || !Application.isMobilePlatform;
             if (showTypedInput && (typingPractical || !typedInputDesktopOnly) && GetComponent<TypedPromptInput>() == null)
                 gameObject.AddComponent<TypedPromptInput>();
+            // After the rows above: they find their spot next to the reply box through the reply text's parent,
+            // which this moves into a scrolling viewport.
+            _scrolling = GetComponent<ScrollingReply>();
+            if (_scrolling == null) _scrolling = gameObject.AddComponent<ScrollingReply>();
+            if (showExitButton && GetComponent<ExitButton>() == null)
+                gameObject.AddComponent<ExitButton>();
             if (movable && GetComponent<PanelMover>() == null)
                 gameObject.AddComponent<PanelMover>();
             if (newConversationButton != null)
@@ -143,7 +160,7 @@ namespace ClaudeLab
         {
             if (agent == null || agent.IsBusy) return;
             agent.ResetConversation();
-            if (replyText != null) replyText.text = "";
+            SetReplyText("");
             SetStatus("New conversation. Claude has forgotten earlier requests.");
         }
 
@@ -221,7 +238,7 @@ namespace ClaudeLab
 
         void ShowReply(string text)
         {
-            if (replyText != null) replyText.text = MarkdownToRichText(text);
+            SetReplyText(MarkdownToRichText(text));
         }
 
         /// <summary>
@@ -245,7 +262,7 @@ namespace ClaudeLab
 
         void ShowError(string message)
         {
-            if (replyText != null) replyText.text = $"<color=#ff7a7a>{message}</color>";
+            SetReplyText($"<color=#ff7a7a>{message}</color>");
         }
 
         void ShowBusy(bool busy)
@@ -256,7 +273,7 @@ namespace ClaudeLab
 
             if (busy)
             {
-                if (replyText != null) replyText.text = "<i>Thinking…</i>";
+                SetReplyText("<i>Thinking…</i>");
             }
             else
             {
@@ -267,6 +284,16 @@ namespace ClaudeLab
                     : "Ready. Press another button.");
             }
         }
+
+        void SetReplyText(string text)
+        {
+            if (replyText == null) return;
+            replyText.text = text;
+            if (_scrolling != null) _scrolling.ScrollToTop();
+        }
+
+        /// <summary>Show a one-line message on the panel's status line (used by the input helpers).</summary>
+        public void ShowStatus(string message) => SetStatus(message);
 
         void SetStatus(string message)
         {
