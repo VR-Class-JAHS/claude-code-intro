@@ -186,9 +186,15 @@ namespace ClaudeLab
             if (req.result != UnityWebRequest.Result.Success)
             {
                 string detail = req.downloadHandler?.text;
+                string busyMessage = null;
+                if (req.responseCode == 429) // the class hit the API's rate limit even after the proxy's retries
+                {
+                    try { busyMessage = (string)JObject.Parse(detail ?? "{}")["detail"]; } catch (JsonException) { }
+                    busyMessage ??= "Claude is busy with the class's questions. Wait a few seconds and ask again.";
+                }
                 onFailure(req.responseCode == 401
                     ? "Proxy rejected the token. Check proxyToken matches PROXY_TOKEN in .env."
-                    : $"Request to {url} failed ({req.responseCode} {req.error}). {detail}");
+                    : busyMessage ?? $"Request to {url} failed ({req.responseCode} {req.error}). {detail}");
                 yield break;
             }
 

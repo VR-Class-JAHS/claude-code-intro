@@ -1,2 +1,4 @@
 .env
 __pycache__/
+# Optional question log (LOG_QUESTIONS=1): students' questions stay on this computer
+logs/
