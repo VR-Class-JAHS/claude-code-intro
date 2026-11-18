@@ -13941,8 +13941,8 @@ MonoBehaviour:
   presets:
   - label: Ball vs. block
     prompt: Drop a ball from 2 meters and a block from 1 meter.
-  - label: Heavier & Higher
-    prompt: Make the ball twice as heavy and drop it from higher.
+  - label: Heavy vs. light
+    prompt: Drop a 1 kg ball and a 5 kg ball from 2 meters.
   - label: Pendulum
     prompt: Set up a pendulum I can watch swing.
   - label: Ramp
@@ -17005,7 +17005,7 @@ GameObject:
   - component: {fileID: 1874933823}
   - component: {fileID: 1874933822}
   m_Layer: 5
-  m_Name: Heavier & Higher
+  m_Name: Heavy vs. light
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -17625,7 +17625,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Heavier & Higher
+  m_text: Heavy vs. light
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
