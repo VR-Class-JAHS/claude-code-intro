@@ -11,9 +11,10 @@ from contextlib import asynccontextmanager
 
 import anthropic
 from dotenv import load_dotenv
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import FastAPI, Header, HTTPException, Request
 from pydantic import BaseModel
 
+import speech
 from discovery import DISCOVERY_PORT, local_ipv4_addresses, start_announcer
 
 load_dotenv()
@@ -35,6 +36,9 @@ async def lifespan(_app: FastAPI):
     if stop:
         print(f"Announcing on UDP {DISCOVERY_PORT} so headsets can find this proxy "
               f"(port {PORT}, addresses: {', '.join(local_ipv4_addresses()) or 'none found'}).")
+    ok, why = speech.available()
+    print(f"Voice input: loading Whisper '{speech.WHISPER_MODEL}' in the background." if ok else f"Voice input off: {why}")
+    speech.warm_up_in_background()
     yield
     if stop:
         stop.set()
@@ -51,7 +55,8 @@ class ChatRequest(BaseModel):
 
 @app.get("/health")
 def health():
-    return {"ok": True, "model": MODEL}
+    voice, _ = speech.available()
+    return {"ok": True, "model": MODEL, "voice": voice}
 
 
 @app.post("/chat")
@@ -75,3 +80,24 @@ def chat(req: ChatRequest, x_proxy_token: str = Header(default="")):
 
     # Returns {id, content: [...text / tool_use blocks...], stop_reason, usage, ...}
     return response.model_dump()
+
+
+@app.post("/transcribe")
+async def transcribe(request: Request, x_proxy_token: str = Header(default="")):
+    """Turn a short 16-bit WAV recording from the panel's Talk button into text, on this computer."""
+    if x_proxy_token != PROXY_TOKEN:
+        raise HTTPException(status_code=401, detail="bad proxy token")
+    ok, why = speech.available()
+    if not ok:
+        raise HTTPException(status_code=501, detail=why)
+    data = await request.body()
+    if len(data) > 2_000_000:
+        raise HTTPException(status_code=413, detail="Recording too large.")
+    try:
+        # Whisper is CPU-heavy: run it off the event loop so /chat keeps answering.
+        import anyio
+        return await anyio.to_thread.run_sync(speech.transcribe, data)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
