@@ -30,6 +30,7 @@ namespace ClaudeLab
             new Preset { label = "Pendulum", prompt = "Set up a pendulum I can watch swing." },
             new Preset { label = "Ramp", prompt = "Set up a 30 degree ramp." },
             new Preset { label = "How fast did it hit?", prompt = "Measure the objects. How long did each one take to fall, and how fast was it going when it hit?" },
+            new Preset { label = "Heavier + higher", prompt = "Make the ball twice as heavy and drop it from higher." },
             new Preset { label = "Moon gravity", prompt = "Switch to Moon gravity and drop a ball from 2 meters." },
             new Preset { label = "Back to Earth", prompt = "Set gravity back to Earth's." },
             new Preset { label = "Clear the lab", prompt = "Clear the lab." },

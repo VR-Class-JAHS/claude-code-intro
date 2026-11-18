@@ -39,18 +39,11 @@ namespace ClaudeLab
         {
             if (spawner == null) return ToolResult.Error("No spawner is connected to measure_object.");
 
-            var all = new List<Transform>();
-            foreach (Transform child in spawner.Container) all.Add(child);
-            if (all.Count == 0) return ToolResult.Ok("The lab is empty. Nothing to measure.");
+            if (spawner.Container.childCount == 0) return ToolResult.Ok("The lab is empty. Nothing to measure.");
 
-            string query = Normalize((string)input["name"]);
-            var targets = query.Length == 0
-                ? all
-                : all.Where(t => Normalize(t.name) == query).ToList();
-            if (targets.Count == 0 && query.Length > 0) // "ball" -> every ball
-                targets = all.Where(t => Normalize(t.name).StartsWith(query)).ToList();
-            if (targets.Count == 0)
-                return ToolResult.Error($"No object called '{input["name"]}'. Objects in the lab: {string.Join(", ", all.Select(t => t.name))}.");
+            string name = (string)input["name"];
+            var targets = LabQuery.Find(spawner, name);
+            if (targets.Count == 0) return ToolResult.Error(LabQuery.NotFound(spawner, name));
 
             float floorY = spawner.SpawnArea.position.y;
             var sb = new StringBuilder();
@@ -88,8 +81,5 @@ namespace ClaudeLab
             float angle = Vector3.Angle(Vector3.ProjectOnPlane(t.forward, Vector3.up), t.forward);
             return $"{t.name}: fixed in place, incline {angle:0.#} deg.";
         }
-
-        static string Normalize(string s) =>
-            string.IsNullOrWhiteSpace(s) ? "" : new string(s.ToLowerInvariant().Where(char.IsLetterOrDigit).ToArray());
     }
 }
