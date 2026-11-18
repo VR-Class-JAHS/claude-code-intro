@@ -26,6 +26,38 @@ While running, the proxy broadcasts a small signed announcement on UDP port 4780
 - If the network drops broadcasts (some school Wi-Fi does), headsets fall back to `proxyUrl` in the Unity settings asset.
 - `PROXY_PORT` in `.env` must match uvicorn's `--port` if you change it from 8000. `ANNOUNCE=0` turns announcements off.
 
+## When the school network blocks Anthropic (Tailscale)
+
+Only the computer running the proxy needs to reach `api.anthropic.com`. Headsets and student computers only talk to the proxy over the school network. If the school blocks Anthropic, send that one computer's internet traffic through a computer at home with Tailscale:
+
+```
+headsets / student computers ──school Wi-Fi──▶ proxy computer ──Tailscale──▶ home laptop ──▶ api.anthropic.com
+```
+
+Check with school IT first: routing around the web filter may go against the network's acceptable-use policy. Asking them to allow `api.anthropic.com` (HTTPS, port 443), like the Meta exception, would be simpler still.
+
+### Home laptop (once)
+
+1. Install Tailscale from tailscale.com/download and sign in.
+2. Tailscale tray icon → **Exit nodes** → **Run exit node**.
+3. In the admin console (login.tailscale.com/admin/machines), open the laptop's **⋯** menu:
+   - **Edit route settings** → tick **Use as exit node**.
+   - **Disable key expiry**, so the laptop doesn't drop off the tailnet after a few months.
+4. Tailscale tray icon → **Preferences** → **Run unattended**, so it keeps working after a restart before anyone logs in.
+5. Windows Settings → **Power**: never sleep when plugged in, and *Do nothing* when the lid is closed. Leave it plugged in and on Wi-Fi or Ethernet.
+
+### School proxy computer (once, then each class)
+
+1. Install Tailscale and sign in to the same account. On a managed computer this may need IT or admin rights. If it never connects on the school Wi-Fi, the filter blocks Tailscale too.
+2. Tailscale tray icon → **Exit nodes** → choose the home laptop, and tick **Allow local network access**. Without that box, headsets and student computers can't reach the proxy.
+3. Check that Anthropic is reachable. A 4xx code such as `401`, `404` or `405` means Anthropic answered; a hang, `000`, or a redirect code means the traffic is still being filtered:
+   ```powershell
+   curl.exe -s -o NUL -w "%{http_code}`n" https://api.anthropic.com/v1/messages
+   ```
+4. Start the proxy as usual and run the tests below, plus `/health` from another device on the school Wi-Fi.
+
+While the exit node is on, all of this computer's internet traffic goes through home, not just Claude's. Turn it off (**Exit nodes** → **None**) after class. If the home laptop is off or offline, `/chat` returns 502 *could not reach Claude API*; a phone hotspot on the proxy computer is the fallback.
+
 ## Test it (session 1 "done")
 
 ```bash
