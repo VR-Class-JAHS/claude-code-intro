@@ -8,7 +8,7 @@ Week 1 of the project plan is done, and the classroom network works on the schoo
 
 1. **Proxy settings link fixed** (2026-11-18): the settings asset now lives in `Assets/ClaudeLab/Settings/Resources/` and is loaded by name, so the scene no longer links to it. When Unity opens on the laptop after pulling, it moves the old asset there by itself (watch the Console for *Moved the proxy settings*). Check Play mode there once.
 2. **Uncommitted Unity changes on the school computer** (2026-11-18): `SampleScene.unity` (only the old settings link; it can be discarded), plus `ProjectSettings.asset`, `UnityConnectSettings.asset`, URP configs and `OpenXRPackageSettings.asset` from the build. Review before committing anything (see CLAUDE.md). The build also left an untracked `build …_BackUpThisFolder_ButDontShipItWithYourGame/` folder, which should go in `.gitignore`.
-3. **Lock down `vr-lab-exit`**: it still accepts SSH password logins from the internet. Limit it to Tailscale devices.
+3. **`vr-lab-exit` locked down** (2026-11-18): Tailscale SSH on, a DigitalOcean firewall with no inbound rules, and OpenSSH turned off. Manage it with `ssh root@vr-lab-exit`; the DigitalOcean Web Console no longer works (Recovery Console does). Steps in `vr-lab-proxy/README.md`.
 4. **Ask IT** whether `api.anthropic.com` can be allowed on the Meta router, like Meta. That would remove the need for the exit node.
 5. Next build: **measurement graphs** (Weeks 2–3). Needs a `start_measurement` tool that records readings over time, and a chart on the panel. `measure_object` and `get_scene_state` already give one-off readings.
 
