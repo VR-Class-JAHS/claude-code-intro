@@ -7,6 +7,7 @@ A Unity VR physics lab (Meta Quest 3/3S) where a Claude-powered assistant sets u
 - Project plan (Week 1 checklist, tool table, dev log): https://claude.ai/artifact/Gix4UhJHzP5EFNaNtT9B8z. It's a Claude Docs doc: read and edit it with the Claude Docs tools. Keep its checklist and dev log current as work lands.
 
 ## Layout
+- `unity-mcp/`: MCP server that lets Claude Code drive the open Unity Editor through `Assets/ClaudeLab/Editor/ClaudeLabBridge.cs` (see its README).
 - `vr-lab-proxy/`: FastAPI proxy that holds the Anthropic API key (`main.py`) and announces itself on the Wi-Fi (`discovery.py`).
 - `claude-code-intro/`: the Unity project (Unity 6000.3.28f1, URP, XR Interaction Toolkit 3.5, OpenXR for Android/Quest).
   - `Assets/ClaudeLab/Scripts/`: `ClaudeAgent` (tool loop), `ClaudeLabPanel` (in-headset UI) and helpers.
@@ -17,6 +18,7 @@ A Unity VR physics lab (Meta Quest 3/3S) where a Claude-powered assistant sets u
 - One branch and pull request per piece of work; the user merges. Commit or push only when asked.
 - Create branches with `--no-track` (e.g. `git switch -c <name> --no-track origin/main`) so they have no upstream and GitHub Desktop offers to publish them as new branches.
 - The user tests every change in Play mode (XR Interaction Simulator) and on the Quest before merging. Say plainly what has and hasn't been tested.
+- When the `unity-vr-lab` MCP tools are available and Unity is open, use them to check your own changes first: `unity_status` and `console_logs` after edits (compile errors), and in Play mode `lab_ask` / `lab_release` / `lab_status` for end-to-end checks. `lab_ask` spends API credit. The user's Play-mode and Quest tests still decide what's tested.
 - Check what a PR actually contains before calling work merged (one commit once landed after its PR was merged).
 - Unity rewrites scene and settings files. Before committing, look at what changed and leave out unrelated churn: `ProjectSettings/ProjectSettings.asset` and `UnityConnectSettings.asset` changes that clear the Unity Cloud link, line-ending-only changes, the TextMesh Pro fallback font asset, an empty `Assets/Resources` folder.
 - Editing `SampleScene.unity` on disk while Unity has it open: tell the user to choose Reload, and not to save before reloading.
