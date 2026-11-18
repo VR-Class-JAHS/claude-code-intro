@@ -20,7 +20,7 @@ namespace ClaudeLab
     {
         public const int DiscoveryPort = 47800;
 
-        [SerializeField] ClaudeProxySettings settings;
+        ClaudeProxySettings settings; // loaded at runtime, never linked in the scene
 
         [Tooltip("Listen in the Editor too. Off by default: Windows asks to allow Unity through the firewall, " +
                  "and in the Editor the settings' proxyUrl already works.")]
@@ -41,11 +41,8 @@ namespace ClaudeLab
 
         void Awake()
         {
-            if (settings == null)
-            {
-                var agent = GetComponent<ClaudeAgent>();
-                if (agent != null) settings = agent.Settings;
-            }
+            var agent = GetComponent<ClaudeAgent>();
+            settings = agent != null ? agent.Settings : ClaudeProxySettings.Load();
         }
 
         void Start()

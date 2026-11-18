@@ -6,8 +6,8 @@ Last updated: 2026-11-18
 
 Week 1 of the project plan is done, and the classroom network works on the school computer (see *Classroom network* below). Next:
 
-1. **Proxy settings link**: each computer's `ClaudeProxySettings` asset has its own ID, so saving `SampleScene` on one computer breaks the link on the other. Until it's fixed, run **Claude Lab → Select Proxy Settings** after switching computers. A permanent fix (find the settings asset by type at runtime, or load it from `Resources`) is the next small PR.
-2. **Uncommitted Unity changes on the school computer** (2026-11-18): `SampleScene.unity` (the settings link above), plus `ProjectSettings.asset`, `UnityConnectSettings.asset`, URP configs and `OpenXRPackageSettings.asset` from the build. Review before committing anything (see CLAUDE.md). The build also left an untracked `build …_BackUpThisFolder_ButDontShipItWithYourGame/` folder, which should go in `.gitignore`.
+1. **Proxy settings link fixed** (2026-11-18): the settings asset now lives in `Assets/ClaudeLab/Settings/Resources/` and is loaded by name, so the scene no longer links to it. When Unity opens on the laptop after pulling, it moves the old asset there by itself (watch the Console for *Moved the proxy settings*). Check Play mode there once.
+2. **Uncommitted Unity changes on the school computer** (2026-11-18): `SampleScene.unity` (only the old settings link; it can be discarded), plus `ProjectSettings.asset`, `UnityConnectSettings.asset`, URP configs and `OpenXRPackageSettings.asset` from the build. Review before committing anything (see CLAUDE.md). The build also left an untracked `build …_BackUpThisFolder_ButDontShipItWithYourGame/` folder, which should go in `.gitignore`.
 3. **Lock down `vr-lab-exit`**: it still accepts SSH password logins from the internet. Limit it to Tailscale devices.
 4. **Ask IT** whether `api.anthropic.com` can be allowed on the Meta router, like Meta. That would remove the need for the exit node.
 5. Next build: **measurement graphs** (Weeks 2–3). Needs a `start_measurement` tool that records readings over time, and a chart on the panel. `measure_object` and `get_scene_state` already give one-off readings.
@@ -29,7 +29,7 @@ Open questions: whether 36 students on one API key stay inside the account's per
   - `lab_timer`: start, stop, reset, read. Shown on the panel's Timer line.
   - `set_gravity`: Earth, Moon, Mars, Jupiter, zero, or a number up to 30 m/s². Restored when Play mode ends.
   - To add them to the existing assistant in `SampleScene`, run **Claude Lab → Add Lab Assistant to Scene** again: it now adds any missing tools, then save the scene. Do this *before* adding the prompt panel so the panel's Timer line gets connected.
-- **Proxy settings link**: `SampleScene` points to a `ClaudeProxySettings` asset that only existed on the old computer. **Claude Lab → Select Proxy Settings** now reconnects the new asset to the assistant automatically. Save the scene afterwards.
+- **Proxy settings link**: `SampleScene` pointed to a `ClaudeProxySettings` asset that only existed on the old computer. Replaced on 2026-11-18: the asset is now loaded from `Resources` by name and the scene doesn't link to it at all.
 
 ## Headset setup (2026-11-17, Meta Quest 3/3S)
 
@@ -66,7 +66,7 @@ Open questions: whether 36 students on one API key stay inside the account's per
 |---|---|---|
 | API key + proxy token | `vr-lab-proxy/.env` | Copy `.env.example` to `.env` and fill it in. Carry the values over privately (password manager or a USB stick, not email or git). |
 | Python environment | `vr-lab-proxy/.venv` | `python -m venv .venv` then `.venv\Scripts\pip install -r requirements.txt` |
-| Unity token asset | `Assets/ClaudeLab/Settings/ClaudeProxySettings.asset` | After `.env` exists: in Unity, **Claude Lab → Select Proxy Settings** (creates it and copies the token from `.env`). |
+| Unity token asset | `Assets/ClaudeLab/Settings/Resources/ClaudeProxySettings.asset` | After `.env` exists: in Unity, **Claude Lab → Select Proxy Settings** (creates it and copies the token from `.env`). No need to save the scene. |
 
 ## Start a session
 

@@ -22,5 +22,5 @@ A Unity VR physics lab (Meta Quest 3/3S) where a Claude-powered assistant sets u
 
 ## Never commit
 - `vr-lab-proxy/.env` (API key and proxy token; the file must be named `.env` with the dot).
-- `Assets/ClaudeLab/Settings/ClaudeProxySettings.asset` (holds the token; gitignored).
+- `Assets/ClaudeLab/Settings/Resources/ClaudeProxySettings.asset` (holds the token; gitignored). Each computer has its own; code loads it by name, so scenes never link to it.
 - Builds (`*.apk`) and `*_BurstDebugInformation_DoNotShip/` (both gitignored).

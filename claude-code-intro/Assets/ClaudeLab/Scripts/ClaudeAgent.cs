@@ -18,8 +18,6 @@ namespace ClaudeLab
     /// </summary>
     public class ClaudeAgent : MonoBehaviour
     {
-        [SerializeField] ClaudeProxySettings settings;
-
         [Tooltip("Tools Claude may use. Leave empty to use every LabTool found on this GameObject and its children.")]
         [SerializeField] List<LabTool> tools = new List<LabTool>();
 
@@ -35,13 +33,15 @@ namespace ClaudeLab
         bool _busy;
 
         public bool IsBusy => _busy;
-        public ClaudeProxySettings Settings => settings;
+        /// <summary>This computer's proxy settings, loaded from Resources (not linked in the scene).</summary>
+        public ClaudeProxySettings Settings => _settings != null ? _settings : (_settings = ClaudeProxySettings.Load());
+        ClaudeProxySettings _settings;
 
         [Tooltip("Optional. Finds the proxy on the Wi-Fi; falls back to the settings' proxyUrl. Defaults to one on this GameObject.")]
         [SerializeField] ProxyDiscovery discovery;
 
         /// <summary>The proxy address in use: the one found on the network, else proxyUrl from settings.</summary>
-        public string ProxyUrl => (discovery != null ? discovery.DiscoveredUrl : null) ?? settings.proxyUrl;
+        public string ProxyUrl => (discovery != null ? discovery.DiscoveredUrl : null) ?? Settings?.proxyUrl;
 
         void Awake()
         {
@@ -59,9 +59,10 @@ namespace ClaudeLab
                 RaiseError("Still working on the last request.");
                 return;
             }
+            var settings = Settings;
             if (settings == null || string.IsNullOrEmpty(settings.proxyToken))
             {
-                RaiseError("ClaudeAgent has no proxy settings or token. Assign a ClaudeProxySettings asset.");
+                RaiseError("No proxy settings or token on this computer. In Unity, run Claude Lab > Select Proxy Settings.");
                 return;
             }
             StartCoroutine(RunTurn(userText));
@@ -83,7 +84,7 @@ namespace ClaudeLab
             Log($"You: {userText}");
 
             bool finished = false;
-            for (int round = 0; round < settings.maxRounds && !finished; round++)
+            for (int round = 0; round < Settings.maxRounds && !finished; round++)
             {
                 JObject response = null;
                 string error = null;
@@ -127,7 +128,7 @@ namespace ClaudeLab
             if (!finished)
             {
                 Rollback(checkpoint);
-                RaiseError($"Stopped after {settings.maxRounds} rounds without a final answer.");
+                RaiseError($"Stopped after {Settings.maxRounds} rounds without a final answer.");
             }
             SetBusy(false);
         }
@@ -167,7 +168,7 @@ namespace ClaudeLab
         {
             var body = new JObject
             {
-                ["system"] = settings.systemPrompt,
+                ["system"] = Settings.systemPrompt,
                 ["tools"] = new JArray(tools.Where(t => t != null).Select(t => t.Definition)),
                 ["messages"] = _messages,
             };
@@ -177,8 +178,8 @@ namespace ClaudeLab
             req.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(body.ToString(Formatting.None)));
             req.downloadHandler = new DownloadHandlerBuffer();
             req.SetRequestHeader("Content-Type", "application/json");
-            req.SetRequestHeader("X-Proxy-Token", settings.proxyToken);
-            req.timeout = settings.timeoutSeconds;
+            req.SetRequestHeader("X-Proxy-Token", Settings.proxyToken);
+            req.timeout = Settings.timeoutSeconds;
 
             yield return req.SendWebRequest();
 
