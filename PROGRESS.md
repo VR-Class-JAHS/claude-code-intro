@@ -11,9 +11,10 @@ Week 1 of the project plan is done, and the classroom network works on the schoo
 3. **`vr-lab-exit` locked down** (2026-11-18): Tailscale SSH on, a DigitalOcean firewall with no inbound rules, and OpenSSH turned off. Manage it with `ssh root@vr-lab-exit`; the DigitalOcean Web Console no longer works (Recovery Console does). Steps in `vr-lab-proxy/README.md`.
 4. **Ask IT** whether `api.anthropic.com` can be allowed on the Meta router, like Meta. That would remove the need for the exit node.
 5. **Measurement graphs** merged (PR #11), tested in Play mode and on the Quest.
-6. **Voice input**, a scrolling reply box and an Exit lab button on branch `voice-input` (2026-11-18), tested; PR next. **On the school computer** the proxy's `.venv` must be rebuilt on Python 3.12/3.13 and `pip install -r requirements.txt` run again (see *Voice input* below). Details under *Measurement graphs* below.
+6. **Voice input**, the scrolling reply box and the Exit lab button merged (PR #12).
+7. **Classroom readiness** on branch `classroom-readiness` (2026-11-18): prompt caching, rate-limit retries and an optional question log in the proxy. Next: the student trial (the VR class has 19 students, 1st period). Restart the proxy to pick up the changes. **On the school computer** the proxy's `.venv` must be rebuilt on Python 3.12/3.13 and `pip install -r requirements.txt` run again (see *Voice input* below). Details under *Measurement graphs* below.
 
-Open questions: whether 36 students on one API key stay inside the account's per-minute rate limits; whether the school Wi-Fi (`ncpsp`) lets devices reach each other directly (not needed now that class uses the Meta router).
+Answered 2026-11-18: a class fits the API key's rate limits with prompt caching (see *Classroom readiness*). Open question: whether the school Wi-Fi (`ncpsp`) lets devices reach each other directly (not needed now that class uses the Meta router).
 
 ## Working now
 
@@ -64,6 +65,13 @@ Open questions: whether 36 students on one API key stay inside the account's per
 - **Exit lab button** (tested in Play mode and on the Quest 3S, 2026-11-18): beside *New conversation* (`Scripts/ExitButton.cs`, *Show Exit Button* on the panel). Press twice within 3 s to quit: back to the Quest home, or out of Play mode in the Editor.
   - Needs **Python 3.12 or 3.13** for the proxy: faster-whisper's PyAV dependency has no Python 3.15 build yet. Rebuilt the laptop's `.venv` on 3.13 (`py -3.13 -m venv --clear .venv`, then `pip install -r requirements.txt`).
   - The Whisper model (about 145 MB) downloads from Hugging Face the first time the proxy starts and is cached in `%USERPROFILE%\.cache\huggingface`. `WHISPER_MODEL` in `.env` picks another size; `WHISPER=0` turns voice off.
+
+- **Classroom readiness** (2026-11-18, proxy changes tested with simulated students and in Play mode):
+  - Account limits (read from the API's response headers): 1,000 requests, 500,000 input tokens and 80,000 output tokens per minute.
+  - A lab request is about 2,900 input tokens before the conversation starts (mostly the 10 tool descriptions), and a question takes 2–3 rounds. Without caching, a class asking a couple of questions a minute would pass the input limit.
+  - The proxy now uses **prompt caching**: the shared tools and system prompt, and each conversation so far, are read from cache (a tenth of the price, and not counted toward the input limit). It also retries rate limits up to 4 times (`MAX_RETRIES` in `.env`), and the panel shows "Claude is busy… ask again" if one still gets through.
+  - Burst test, 12 simulated students asking at the same moment: all 12 answered, none rate-limited; median wait 7.4 s, slowest 15.9 s; 2.6 rounds per question; 86 uncached input tokens in total, everything else from cache. Cost about $0.004 per question on Claude Sonnet 5.5, so roughly $1.50 for 19 students asking 20 questions each.
+  - **Question log** (off by default; `LOG_QUESTIONS=1` in `.env`): one line per question and per answer round in `vr-lab-proxy/logs/YYYY-MM-DD.jsonl` (gitignored), with the headset's address, the question or reply text, the tools used and token counts. Text only: no audio, no names. Use it after a class to see what students asked and where Claude got it wrong.
 
 ## Setup gotcha
 

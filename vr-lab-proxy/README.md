@@ -35,6 +35,12 @@ While running, the proxy broadcasts a small signed announcement on UDP port 4780
 - `.env` options: `WHISPER_MODEL=tiny.en` (faster) or `small.en` (more accurate); `WHISPER=0` turns voice input off.
 - On a laptop CPU, a few seconds of speech takes about half a second. Requests are handled one at a time, so many students talking at once will queue.
 
+## Class use: caching, rate limits, question log
+
+- **Prompt caching** is on for every `/chat` request: the tool list and system prompt (about 2,900 tokens, the same for every headset) and each conversation so far are cached. Cached tokens cost a tenth as much and don't count toward the API key's input-tokens-per-minute limit, which is what lets a class share one key. A burst of 12 simulated students on 2026-11-18: all answered, median wait 7.4 s, nothing rate-limited.
+- **Rate limits**: the SDK retries 429 and overload errors with backoff, up to `MAX_RETRIES` times (default 4). If a request is still limited, `/chat` returns 429 with a message the panel shows ("Claude is busy… ask again").
+- **Question log** (off by default): `LOG_QUESTIONS=1` in `.env` writes each question and answer round to `logs/YYYY-MM-DD.jsonl` (gitignored): time, the headset's address, the text, the tools used and token counts. Text only, no audio, no names. Check with school policy before keeping student questions, and delete the files when you're done with them.
+
 ## Classroom network: Meta router + Tailscale exit node
 
 Tested 2026-11-18 on the school computer with a Quest 3S. In class, the headsets and the proxy computer all join the classroom's Meta router (`NETGEAR_11ac`). That network reaches Meta but blocks `api.anthropic.com`, so the proxy computer sends its internet traffic through a small cloud server (`vr-lab-exit`) with Tailscale:
