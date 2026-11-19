@@ -5,6 +5,8 @@ A Unity VR physics lab (Meta Quest 3/3S) where a Claude-powered assistant sets u
 ## Read first
 - `PROGRESS.md`: what works, what's tested, how to start a session, next steps. Start with its "Next session" section.
 - Project plan (Week 1 checklist, tool table, dev log): https://claude.ai/artifact/Gix4UhJHzP5EFNaNtT9B8z. It's a Claude Docs doc: read and edit it with the Claude Docs tools. Keep its checklist and dev log current as work lands.
+- Student trial kit (observation sheet to print, school computer checklist): https://claude.ai/artifact/9KMFPMNATPA6Hqst1AW1yB
+- Workshop lab guide and instructor notes: https://claude.ai/artifact/3yMhS3p7HKiRJsqyRnUNCm (answer file in `workshop/`).
 
 ## Layout
 - `unity-mcp/`: MCP server that lets Claude Code drive the open Unity Editor through `Assets/ClaudeLab/Editor/ClaudeLabBridge.cs` (see its README).
@@ -13,6 +15,7 @@ A Unity VR physics lab (Meta Quest 3/3S) where a Claude-powered assistant sets u
   - `Assets/ClaudeLab/Scripts/`: `ClaudeAgent` (tool loop), `ClaudeLabPanel` (in-headset UI) and helpers.
   - `Assets/ClaudeLab/Scripts/Tools/`: one `LabTool` subclass per tool. New tools also go in `ToolTypes` in `Editor/ClaudeLabSetup.cs`.
   - `Assets/ClaudeLab/Editor/`: the **Claude Lab** menu (add assistant, add panel, proxy settings).
+- `workshop/`: the workshop's finished `PaintObjectTool.cs`. It stays outside `unity-project/` so Unity doesn't compile it next to a participant's own copy.
 
 ## How we work
 - One branch and pull request per piece of work; the user merges. Commit or push only when asked.
@@ -22,6 +25,9 @@ A Unity VR physics lab (Meta Quest 3/3S) where a Claude-powered assistant sets u
 - Check what a PR actually contains before calling work merged (one commit once landed after its PR was merged).
 - Unity rewrites scene and settings files. Before committing, look at what changed and leave out unrelated churn: `ProjectSettings/ProjectSettings.asset` and `UnityConnectSettings.asset` changes that clear the Unity Cloud link, line-ending-only changes, the TextMesh Pro fallback font asset, an empty `Assets/Resources` folder.
 - Editing `SampleScene.unity` on disk while Unity has it open: tell the user to choose Reload, and not to save before reloading.
+- After Play mode the scene sometimes shows unsaved changes nobody made (*Driving RectTransform*, Unity's UI layout). **Don't Save** is safe; the `play_mode` tool won't enter Play mode until they're cleared.
+- On the school computer, git isn't on the command line and only GitHub Desktop is signed in to GitHub: use GitHub Desktop's git, and let the user publish branches and open PRs there.
+- Memory saved by Claude Code stays on the computer it was saved on. Anything a session on another computer needs goes in this file, `PROGRESS.md` or the project plan.
 
 ## Never commit
 - `vr-lab-proxy/.env` (API key and proxy token; the file must be named `.env` with the dot).
