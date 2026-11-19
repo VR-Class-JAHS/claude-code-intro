@@ -6,14 +6,18 @@ Last updated: 2026-11-18
 
 Week 1 of the project plan is done, and the classroom network works on the school computer (see *Classroom network* below).
 
-**Up next: the student trial** (19 students, 1st period). Everything for it is in the Student trial kit: https://claude.ai/artifact/9KMFPMNATPA6Hqst1AW1yB (an observation sheet to print, and a school computer checklist). The school computer hasn't pulled any of the 2026-11-18 changes yet. Before class it needs, in order: close Unity, pull `main` in GitHub Desktop, re-add `unity-project/` in Unity Hub, rebuild the proxy's `.venv` on Python 3.13, start the proxy once on the classroom network so the voice model downloads, and build to each headset. Optional: `LOG_QUESTIONS=1` in `vr-lab-proxy/.env` (check school policy), and `unity-mcp/.venv` if Claude Code should drive Unity there.
+**Up next: the student trial** (19 students, 1st period). Everything for it is in the Student trial kit: https://claude.ai/artifact/9KMFPMNATPA6Hqst1AW1yB (an observation sheet to print, and a school computer checklist).
+
+**School computer, set up 2026-11-19:** the repo folder was deleted and cloned fresh, so its untracked files were recreated: `vr-lab-proxy/.env` (copied from the deleted folder in the Recycle Bin), Python 3.13 (`py install 3.13`), the proxy's `.venv`, the Whisper model, `unity-mcp/.venv`, `unity-project/` added in Unity Hub, the settings asset (**Claude Lab → Select Proxy Settings**), and the platform switched to Android. Tested: `/chat` and `/transcribe`; a Play-mode ball drop through the Unity MCP tools; and one Quest 3S on the Meta router with the new build, which asked two spoken questions and got answers. Left before class: install `unity-project/headset-build.apk` (gitignored) on the other headsets. Optional: `LOG_QUESTIONS=1` in `vr-lab-proxy/.env` (check school policy).
+
+**Classroom network changed 2026-11-19:** the Meta router stopped passing Tailscale traffic, so the proxy computer now uses a **NetBird** exit node on the same droplet (suggested by local IT). See *Classroom network* below and `vr-lab-proxy/README.md`. At school, turn on NetBird's exit node before opening Claude Code.
 
 Done so far:
 
 1. **Proxy settings link fixed** (2026-11-18): the settings asset now lives in `Assets/ClaudeLab/Settings/Resources/` and is loaded by name, so the scene no longer links to it. On the laptop, Unity moved the old asset there by itself, and Play mode works (checked 2026-11-18).
 2. **Build changes reviewed** (2026-11-18): every leftover change from the school build was noise and was discarded, including the old scene settings link. CLAUDE.md now lists the files builds rewrite. The build backup folder is gitignored (commit 97bcbf2, which went to `main` directly without a PR).
 3. **`vr-lab-exit` locked down** (2026-11-18): Tailscale SSH on, a DigitalOcean firewall with no inbound rules, and OpenSSH turned off. Manage it with `ssh root@vr-lab-exit`; the DigitalOcean Web Console no longer works (Recovery Console does). Steps in `vr-lab-proxy/README.md`.
-4. **Ask IT** whether `api.anthropic.com` can be allowed on the Meta router, like Meta. That would remove the need for the exit node.
+4. **Asked IT** (2026-11-19): local IT won't ask central IT for an `api.anthropic.com` exception on the Meta router, and suggested a NetBird exit node instead, which is what class now uses.
 5. **Measurement graphs** merged (PR #11), tested in Play mode and on the Quest.
 6. **Voice input**, the scrolling reply box and the Exit lab button merged (PR #12).
 7. **Classroom readiness** merged (PR #13). Next: the student trial (the VR class has 19 students, 1st period).
@@ -56,11 +60,14 @@ Answered 2026-11-18: a class fits the API key's rate limits with prompt caching 
 
 - **Typed input** (tested in Play mode 2026-11-17): a text box and Send button under the reply (`Scripts/TypedPromptInput.cs`, added at Play time). Enter also sends. Shown in the Editor and desktop builds, hidden on the Quest (*Typed Input Desktop Only* on the panel). While the box has focus the Input System keyboard is paused so typed letters don't drive the XR simulator. Covers Week 1 session 2's text box.
 
-## Classroom network (tested 2026-11-18 on the school computer and a Quest 3S)
+## Classroom network (tested 2026-11-18, changed and retested 2026-11-19 on the school computer and a Quest 3S)
 
 - The school network blocks `api.anthropic.com`, including on the classroom's Meta router (`NETGEAR_11ac`), which otherwise reaches Meta.
-- Fix: the proxy computer uses **Tailscale** with a $4/month DigitalOcean droplet, `vr-lab-exit`, as its exit node (with *Allow local network access* on). Only the proxy computer needs it; headsets just talk to the proxy.
-- Class runs on the Meta router: proxy computer and headsets both on `NETGEAR_11ac`. Auto-discovery worked there with no rebuild: the headset found the proxy and the panel answered.
+- Fix: the proxy computer sends its internet traffic through a $4/month DigitalOcean droplet, `vr-lab-exit`. Only the proxy computer needs this; headsets just talk to the proxy.
+  - 2026-11-18: through **Tailscale**'s exit node. It worked on the Meta router that day.
+  - 2026-11-19: Tailscale stopped working on the Meta router. It connected directly (after adding an inbound UDP 41641 rule to the droplet's firewall), but almost no traffic came back, and Tailscale's relays and address checks got no answer there. Local IT suggested **NetBird**: its exit node on the same droplet works on the Meta router through NetBird's relay over HTTPS 443 (recorded for 2 minutes, stable). Tailscale stays only for `ssh root@vr-lab-exit`.
+  - Diagnosed with a script that waited for the computer to join `NETGEAR_11ac` and recorded routes, DNS, Tailscale/NetBird state and web access, because Claude Code itself loses Anthropic on that network without a working exit node.
+- Class runs on the Meta router: proxy computer and headsets both on `NETGEAR_11ac`. Auto-discovery works there with no rebuild: the headset found the proxy and the panel answered (2026-11-18 with Tailscale, 2026-11-19 with NetBird, including voice).
 - On the school Wi-Fi (`ncpsp`) the headset never connected: no announcements arrived, so it fell back to `proxyUrl` = `localhost`.
 - Firewall rule *VR Lab proxy (port 8000)* added on the school computer.
 - Setup and the per-class checklist: `vr-lab-proxy/README.md` → *Classroom network*.

@@ -41,19 +41,21 @@ While running, the proxy broadcasts a small signed announcement on UDP port 4780
 - **Rate limits**: the SDK retries 429 and overload errors with backoff, up to `MAX_RETRIES` times (default 4). If a request is still limited, `/chat` returns 429 with a message the panel shows ("Claude is busy… ask again").
 - **Question log** (off by default): `LOG_QUESTIONS=1` in `.env` writes each question and answer round to `logs/YYYY-MM-DD.jsonl` (gitignored): time, the headset's address, the text, the tools used and token counts. Text only, no audio, no names. Check with school policy before keeping student questions, and delete the files when you're done with them.
 
-## Classroom network: Meta router + Tailscale exit node
+## Classroom network: Meta router + NetBird exit node
 
-Tested 2026-11-18 on the school computer with a Quest 3S. In class, the headsets and the proxy computer all join the classroom's Meta router (`NETGEAR_11ac`). That network reaches Meta but blocks `api.anthropic.com`, so the proxy computer sends its internet traffic through a small cloud server (`vr-lab-exit`) with Tailscale:
+Tested 2026-11-19 on the school computer with a Quest 3S: two spoken questions from the headset were transcribed and answered. In class, the headsets and the proxy computer all join the classroom's Meta router (`NETGEAR_11ac`). That network reaches Meta but blocks `api.anthropic.com`, so the proxy computer sends its internet traffic through a small cloud server (`vr-lab-exit`) with **NetBird**:
 
 ```
-headsets ──Meta router──▶ proxy computer ──Tailscale──▶ vr-lab-exit (cloud) ──▶ api.anthropic.com
+headsets ──Meta router──▶ proxy computer ──NetBird relay (HTTPS 443)──▶ vr-lab-exit (cloud) ──▶ api.anthropic.com
 ```
 
-Only the proxy computer needs Tailscale. Headsets only talk to the proxy, and on the Meta router they find it through auto-discovery with no address typed in.
+Only the proxy computer needs NetBird. Headsets only talk to the proxy, and on the Meta router they find it through auto-discovery with no address typed in.
+
+Why NetBird and not Tailscale: Tailscale worked on the Meta router on 2026-11-18, but on 2026-11-19 it stopped. The tunnel connected, almost no traffic came back through it, and Tailscale's relays and address checks got no answer on that network. NetBird falls back to a relay over ordinary HTTPS (TCP 443) when direct connections are blocked, and that gets through. Tailscale stays installed on the droplet and the proxy computer only to manage the droplet (`ssh root@vr-lab-exit`) from the hotspot or from home.
 
 Why not the school Wi-Fi (`ncpsp`): it blocks Anthropic too, and a headset on it never connected to the proxy. The announcements didn't arrive, so it fell back to `proxyUrl` (`localhost`). Whether `ncpsp` lets devices reach each other directly wasn't tested.
 
-Check with school IT: routing around the web filter may go against the network's acceptable-use policy. If they allow `api.anthropic.com` (HTTPS, port 443) on the Meta router, like the Meta exception, the exit node isn't needed.
+School IT knows about this setup: local IT suggested NetBird on 2026-11-19. They won't ask central IT for an `api.anthropic.com` exception (the Meta one already existed for programs that use social media).
 
 ### Cloud exit node (once)
 
@@ -82,28 +84,47 @@ A DigitalOcean Basic droplet, $4/month (512 MB). It's billed by the hour, and a 
 
    Testing tip: with the exit node on, connecting to the droplet's *public* IP goes through the tunnel and bypasses the DigitalOcean firewall, so it can't test the firewall. After the lockdown, the public IP refuses port 22 even that way.
 
-A computer at home can be the exit node instead: install Tailscale, turn on **Run exit node** in its tray menu, approve it the same way, and keep it awake.
+   On 2026-11-19 an inbound rule for **UDP 41641** (Tailscale's port, all IPv4 and IPv6) was added to `vr-lab-exit-lockdown`, so Tailscale can connect directly from networks with strict address translation. SSH stays off; Tailscale only accepts your own devices.
+
+5. Add NetBird (done 2026-11-19), on the hotspot or at home:
+   - Sign up at app.netbird.io. **Setup Keys → Create Setup Key**: one-time use, expires in 1 day, *Ephemeral peers* off. The key only adds the server; it stays connected after the key expires.
+   - `ssh root@vr-lab-exit`, then:
+     ```bash
+     curl -fsSL https://pkgs.netbird.io/install.sh | sh
+     netbird up --setup-key <your key>
+     ```
+     The NetBird service starts on boot. IP forwarding is already on from step 2.
+   - NetBird dashboard: **Peers → vr-lab-exit → Add Exit Node**, distribution group *All*, **Auto Apply** off (choose it per class). The default *All → All* access policy lets your devices use it.
+   - **DNS → Nameservers**: add one (Cloudflare or Google) with match domain **ALL**. The school's DNS servers don't answer through the exit node.
+   - Check with `netbird status` on the droplet: *Management* and *Signal* connected, *Networks* `0.0.0.0/0, ::/0`.
+
+   NetBird needs no inbound ports on the droplet: when it can't connect directly, it uses its relay over HTTPS 443.
+
+Droplet upkeep: ignore the *New release '26.04 LTS' available* message (24.04 is supported for years). When it says *System restart required*, run `reboot` over `ssh root@vr-lab-exit`, wait a minute, and reconnect. Tailscale and NetBird both start on boot.
 
 ### Proxy computer (once)
 
-1. Install Tailscale for Windows and sign in to the same account (needs admin rights).
-2. Add the firewall rule from **Setup** above. Windows marks both school networks as Public; the rule covers that.
+1. Install the **NetBird** Windows app (needs admin rights) and sign in to the same NetBird account.
+2. Install **Tailscale** for Windows and sign in, only for `ssh root@vr-lab-exit`. Its exit node stays on **None**: two exit nodes at once would conflict.
+3. Add the firewall rule from **Setup** above. Windows marks both school networks as Public; the rule covers that.
 
 ### Each class
 
-1. Connect the proxy computer to `NETGEAR_11ac` (Wi-Fi, or Ethernet to a LAN port).
-2. Tailscale tray icon → **Use exit node** → `vr-lab-exit`, and tick **Allow local network access**. Without that box, headsets can't reach the proxy.
+1. NetBird tray icon → exit node → `vr-lab-exit`. At school, do this *before* opening Claude Code: it needs the exit node to reach Anthropic too. Tailscale's exit node stays on **None**.
+2. Connect the proxy computer to `NETGEAR_11ac` (Wi-Fi, or Ethernet to a LAN port).
 3. Check that Anthropic is reachable. A 4xx code such as `401`, `404` or `405` means Anthropic answered; a hang, `000`, or a redirect code means it's still filtered:
    ```powershell
    curl.exe -s -o NUL -w "%{http_code}`n" https://api.anthropic.com/v1/messages
    ```
+   For details, `& 'C:\Program Files\NetBird\netbird.exe' status -d` should show `vr-lab-exit` as *Connected*. On the Meta router the connection type is *Relayed*; on the hotspot it's *P2P*.
 4. Start the proxy with `--host 0.0.0.0`. Headsets on `NETGEAR_11ac` find it automatically. To check from a headset, open `http://<proxy computer's address>:8000/health` in the Quest browser.
-5. After class: **Use exit node** → **None**. While it's on, all of the computer's internet traffic goes through the cloud server.
+5. After class: deselect the exit node in NetBird. While it's on, all of the computer's internet traffic goes through the cloud server.
 
 If the exit node is unreachable, `/chat` returns 502 *could not reach Claude API*; a phone hotspot on the proxy computer is the fallback.
 
 Notes:
-- The school Wi-Fi gives out `100.x` addresses, the same range Tailscale uses. Checked on 2026-11-18: traffic to other devices on that network still goes over Wi-Fi with the exit node on.
+- With NetBird's exit node on, traffic to the Meta router's own network (`10.79.110.0/24`) stays on Wi-Fi, so headsets still reach the proxy (checked 2026-11-19). NetBird needs no *Allow local network access* setting for this.
+- The school Wi-Fi gives out `100.x` addresses, the same range Tailscale and NetBird use. Checked on 2026-11-18 with Tailscale: traffic to other devices on that network still goes over Wi-Fi with the exit node on.
 - If the router hands the proxy computer a new address each day, only the `proxyUrl` fallback cares. A DHCP reservation in the router keeps it fixed.
 - If headsets can't reach the proxy on the router, look for client (AP) isolation in its settings. It wasn't needed on 2026-11-18.
 
