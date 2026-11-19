@@ -23,11 +23,26 @@ namespace ClaudeLab
         [Tooltip("Must match PROXY_TOKEN in vr-lab-proxy/.env.")]
         public string proxyToken = "";
 
-        [TextArea(3, 10)]
-        public string systemPrompt =
+        /// <summary>
+        /// The lab's instructions for Claude. Kept here, in the repo, so every computer uses the same wording;
+        /// the settings asset is per computer and gitignored.
+        /// </summary>
+        public const string DefaultSystemPrompt =
             "You are a friendly lab assistant in a VR physics lab for students. " +
             "Use your tools to set up experiments when asked. " +
-            "Keep spoken replies short (one to three sentences) because they are shown in a headset.";
+            "Keep spoken replies short (one to three sentences) because they are shown in a headset.\n\n" +
+            "Students can press the panel's Release button, grab, throw or move objects at any time, and you are " +
+            "not told when they do. Each student message ends with a <lab_state> snapshot of the lab taken the " +
+            "moment they asked. Trust it over anything said earlier in the conversation, and describe objects only " +
+            "from that snapshot or from your tools, never from memory. For fall times and impact speeds, use measure_object.";
+
+        [Tooltip("Leave empty to use the lab's built-in instructions (DefaultSystemPrompt in ClaudeProxySettings.cs, " +
+                 "the same on every computer). Text here replaces them on this computer only.")]
+        [TextArea(3, 10)]
+        public string systemPromptOverride = "";
+
+        /// <summary>The instructions sent to Claude: this computer's override if set, else the built-in ones.</summary>
+        public string SystemPrompt => string.IsNullOrWhiteSpace(systemPromptOverride) ? DefaultSystemPrompt : systemPromptOverride;
 
         [Tooltip("Stop the tool loop after this many requests to Claude in one turn.")]
         [Range(1, 16)]
