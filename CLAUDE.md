@@ -27,6 +27,7 @@ A Unity VR physics lab (Meta Quest 3/3S) where a Claude-powered assistant sets u
 - Editing `SampleScene.unity` on disk while Unity has it open: tell the user to choose Reload, and not to save before reloading.
 - After Play mode the scene sometimes shows unsaved changes nobody made (*Driving RectTransform*, Unity's UI layout). **Don't Save** is safe; the `play_mode` tool won't enter Play mode until they're cleared.
 - On the school computer, git isn't on the command line and only GitHub Desktop is signed in to GitHub: use GitHub Desktop's git, and let the user publish branches and open PRs there.
+- At school, Claude Code only reaches Anthropic while the NetBird exit node (`vr-lab-exit`) is on, or on the user's phone hotspot. Never ask the user to turn it off or switch networks mid-session to test something: the session loses its connection. To test another network, leave a script running that waits for the switch and records results to a file, then read it once the user is back (see *Classroom network* in `PROGRESS.md`).
 - Memory saved by Claude Code stays on the computer it was saved on. Anything a session on another computer needs goes in this file, `PROGRESS.md` or the project plan.
 
 ## Never commit
