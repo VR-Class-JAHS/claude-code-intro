@@ -13,7 +13,9 @@ Week 1 of the project plan is done, and the classroom network works on the schoo
 5. **Measurement graphs** merged (PR #11), tested in Play mode and on the Quest.
 6. **Voice input**, the scrolling reply box and the Exit lab button merged (PR #12).
 7. **Classroom readiness** merged (PR #13). Next: the student trial (the VR class has 19 students, 1st period).
-8. **Unity MCP server** on branch `unity-mcp` (2026-11-18), tested end to end; see `unity-mcp/README.md`. To use it: set up `unity-mcp/.venv` (once per computer), open Unity, start a new Claude Code session in the repo folder and approve the `unity-vr-lab` server. **On the school computer** the proxy's `.venv` must be rebuilt on Python 3.12/3.13 and `pip install -r requirements.txt` run again (see *Voice input* below). Details under *Measurement graphs* below.
+8. **Unity MCP server** merged (PR #14), tested in a real Claude Code session (it's Editor-only; the Quest build still works); see `unity-mcp/README.md` and *Unity MCP server* below. To use it: set up `unity-mcp/.venv` (once per computer), open Unity, start a new Claude Code session in the repo folder (or `unity-project/`) and approve the `unity-vr-lab` server. **On the school computer** the proxy's `.venv` must be rebuilt on Python 3.12/3.13 and `pip install -r requirements.txt` run again (see *Voice input* below).
+9. **Unity folder renamed** to `unity-project/` (PR #15, 2026-11-18). **On the school computer:** close Unity before pulling, then in Unity Hub remove the old entry and **Add** `unity-project/` (see *Start a session*).
+10. **Workshop drafted** (2026-11-18): lab guide and instructor notes in a Claude Doc, answer file in `workshop/` (PR #16); see *Workshop* below. Next: a dry run by someone new to the lab, then the student trial.
 
 Answered 2026-11-18: a class fits the API key's rate limits with prompt caching (see *Classroom readiness*). Open question: whether the school Wi-Fi (`ncpsp`) lets devices reach each other directly (not needed now that class uses the Meta router).
 
@@ -75,6 +77,11 @@ Answered 2026-11-18: a class fits the API key's rate limits with prompt caching 
   - **Question log** (off by default; `LOG_QUESTIONS=1` in `.env`): one line per question and per answer round in `vr-lab-proxy/logs/YYYY-MM-DD.jsonl` (gitignored), with the headset's address, the question or reply text, the tools used and token counts. Text only: no audio, no names. Use it after a class to see what students asked and where Claude got it wrong.
 
 - **Unity MCP server** (2026-11-18, tested through an MCP client against the running Editor): `unity-mcp/server.py` (MCP Python SDK 2.x, Python 3.13) + `Assets/ClaudeLab/Editor/ClaudeLabBridge.cs` (TCP on 127.0.0.1:8765, per-Editor token in `Library/ClaudeLabBridge/token.txt`). Tools: unity_status, list_gameobjects, get_component, set_property, play_mode, console_logs, run_menu_item (Claude Lab menu only), lab_ask, lab_release, lab_status. Registered for Claude Code in `.mcp.json` at the repo root. Tested: entered Play mode, asked "Drop a ball from 2 meters", read the reply and the waiting ball, pressed Release, saw it land, exited Play mode, no Console errors.
+  - Merged in PR #14. Also tested in real Claude Code sessions started from both the repo folder and `unity-project/` (`.mcp.json` starts the server through `cmd`, which finds `unity-mcp\` in either), including a 3 m ball drop with `lab_ask` and `lab_release`.
+  - The bridge enters and leaves Play mode with `EditorApplication.EnterPlaymode()` / `ExitPlaymode()` (PR #15).
+  - After some trips through Play mode, with the tools or the Play button, the scene shows unsaved changes. Undo History (Window → General → Undo History) shows *Driving RectTransform*, Unity's UI layout re-setting the panel; saving writes the same values back. Choose **Don't Save**. `play_mode` `enter` refuses while the scene has unsaved changes.
+
+- **Workshop** (drafted 2026-11-18, not yet run): "Building a tool-using agent in Unity", 90 minutes. Lab guide and instructor notes: https://claude.ai/artifact/3yMhS3p7HKiRJsqyRnUNCm (a Claude Doc; only people it's shared with can open it). Participants write a `paint_object` tool, then strip clues from its description to see what Claude relies on. The finished tool is `workshop/PaintObjectTool.cs`, kept outside `unity-project` so it doesn't clash with participants' own copies. Tested in Play mode with the file copied in: "turn the block red" called `paint_object`; "everything green" called it once per type; "make the block pink" made Claude offer red or purple without calling it. Not yet: a dry run by someone new to the lab.
 
 ## Setup gotcha
 
@@ -97,7 +104,7 @@ Answered 2026-11-18: a class fits the API key's rate limits with prompt caching 
 
 ## Ideas for next steps
 
-- Voice input, so students can ask their own questions instead of only the preset buttons.
+- ~~Voice input, so students can ask their own questions instead of only the preset buttons.~~ Done 2026-11-18 (PR #12).
 - Show the panel near the student wherever they stand (follow or summon it).
 - Check each new tool on its own: measure_object after a student drop, lab_timer, set_gravity on Moon and zero.
 - ~~Check whether school Wi-Fi passes UDP broadcasts and device-to-device traffic~~ Done 2026-11-18: class uses the Meta router instead (see *Classroom network*).
