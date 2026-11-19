@@ -4,7 +4,11 @@ Last updated: 2026-11-18
 
 ## Next session (start here)
 
-Week 1 of the project plan is done, and the classroom network works on the school computer (see *Classroom network* below). Next:
+Week 1 of the project plan is done, and the classroom network works on the school computer (see *Classroom network* below).
+
+**Up next: the student trial** (19 students, 1st period). Everything for it is in the Student trial kit: https://claude.ai/artifact/9KMFPMNATPA6Hqst1AW1yB (an observation sheet to print, and a school computer checklist). The school computer hasn't pulled any of the 2026-11-18 changes yet. Before class it needs, in order: close Unity, pull `main` in GitHub Desktop, re-add `unity-project/` in Unity Hub, rebuild the proxy's `.venv` on Python 3.13, start the proxy once on the classroom network so the voice model downloads, and build to each headset. Optional: `LOG_QUESTIONS=1` in `vr-lab-proxy/.env` (check school policy), and `unity-mcp/.venv` if Claude Code should drive Unity there.
+
+Done so far:
 
 1. **Proxy settings link fixed** (2026-11-18): the settings asset now lives in `Assets/ClaudeLab/Settings/Resources/` and is loaded by name, so the scene no longer links to it. On the laptop, Unity moved the old asset there by itself, and Play mode works (checked 2026-11-18).
 2. **Build changes reviewed** (2026-11-18): every leftover change from the school build was noise and was discarded, including the old scene settings link. CLAUDE.md now lists the files builds rewrite. The build backup folder is gitignored (commit 97bcbf2, which went to `main` directly without a PR).
