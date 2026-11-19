@@ -12,7 +12,8 @@ Week 1 of the project plan is done, and the classroom network works on the schoo
 4. **Ask IT** whether `api.anthropic.com` can be allowed on the Meta router, like Meta. That would remove the need for the exit node.
 5. **Measurement graphs** merged (PR #11), tested in Play mode and on the Quest.
 6. **Voice input**, the scrolling reply box and the Exit lab button merged (PR #12).
-7. **Classroom readiness** on branch `classroom-readiness` (2026-11-18): prompt caching, rate-limit retries and an optional question log in the proxy. Next: the student trial (the VR class has 19 students, 1st period). Restart the proxy to pick up the changes. **On the school computer** the proxy's `.venv` must be rebuilt on Python 3.12/3.13 and `pip install -r requirements.txt` run again (see *Voice input* below). Details under *Measurement graphs* below.
+7. **Classroom readiness** merged (PR #13). Next: the student trial (the VR class has 19 students, 1st period).
+8. **Unity MCP server** on branch `unity-mcp` (2026-11-18), tested end to end; see `unity-mcp/README.md`. To use it: set up `unity-mcp/.venv` (once per computer), open Unity, start a new Claude Code session in the repo folder and approve the `unity-vr-lab` server. **On the school computer** the proxy's `.venv` must be rebuilt on Python 3.12/3.13 and `pip install -r requirements.txt` run again (see *Voice input* below). Details under *Measurement graphs* below.
 
 Answered 2026-11-18: a class fits the API key's rate limits with prompt caching (see *Classroom readiness*). Open question: whether the school Wi-Fi (`ncpsp`) lets devices reach each other directly (not needed now that class uses the Meta router).
 
@@ -73,6 +74,8 @@ Answered 2026-11-18: a class fits the API key's rate limits with prompt caching 
   - Burst test, 12 simulated students asking at the same moment: all 12 answered, none rate-limited; median wait 7.4 s, slowest 15.9 s; 2.6 rounds per question; 86 uncached input tokens in total, everything else from cache. Cost about $0.004 per question on Claude Sonnet 5.5, so roughly $1.50 for 19 students asking 20 questions each.
   - **Question log** (off by default; `LOG_QUESTIONS=1` in `.env`): one line per question and per answer round in `vr-lab-proxy/logs/YYYY-MM-DD.jsonl` (gitignored), with the headset's address, the question or reply text, the tools used and token counts. Text only: no audio, no names. Use it after a class to see what students asked and where Claude got it wrong.
 
+- **Unity MCP server** (2026-11-18, tested through an MCP client against the running Editor): `unity-mcp/server.py` (MCP Python SDK 2.x, Python 3.13) + `Assets/ClaudeLab/Editor/ClaudeLabBridge.cs` (TCP on 127.0.0.1:8765, per-Editor token in `Library/ClaudeLabBridge/token.txt`). Tools: unity_status, list_gameobjects, get_component, set_property, play_mode, console_logs, run_menu_item (Claude Lab menu only), lab_ask, lab_release, lab_status. Registered for Claude Code in `.mcp.json` at the repo root. Tested: entered Play mode, asked "Drop a ball from 2 meters", read the reply and the waiting ball, pressed Release, saw it land, exited Play mode, no Console errors.
+
 ## Setup gotcha
 
 - The keys file must be named `.env` (with the dot). A file named `env` is not read by the proxy and is not ignored by git.
@@ -83,6 +86,7 @@ Answered 2026-11-18: a class fits the API key's rate limits with prompt caching 
 |---|---|---|
 | API key + proxy token | `vr-lab-proxy/.env` | Copy `.env.example` to `.env` and fill it in. Carry the values over privately (password manager or a USB stick, not email or git). |
 | Python environment | `vr-lab-proxy/.venv` | Python 3.12 or 3.13 (not 3.15, for voice input): `py -3.13 -m venv .venv` then `.venv\Scripts\pip install -r requirements.txt` |
+| MCP server environment | `unity-mcp/.venv` | `py -3.13 -m venv .venv` then `.venv\Scripts\pip install -r requirements.txt` (in `unity-mcp/`) |
 | Unity token asset | `Assets/ClaudeLab/Settings/Resources/ClaudeProxySettings.asset` | After `.env` exists: in Unity, **Claude Lab → Select Proxy Settings** (creates it and copies the token from `.env`). No need to save the scene. |
 
 ## Start a session

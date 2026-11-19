@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "unity-vr-lab": {
+      "command": "cmd",
+      "args": [
+        "/d",
+        "/c",
+        "if exist unity-mcp\\server.py (unity-mcp\\.venv\\Scripts\\python.exe unity-mcp\\server.py) else (..\\unity-mcp\\.venv\\Scripts\\python.exe ..\\unity-mcp\\server.py)"
+      ]
+    }
+  }
+}
