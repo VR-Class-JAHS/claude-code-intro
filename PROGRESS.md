@@ -14,12 +14,9 @@ Week 1 of the project plan is done, and the classroom network works on the schoo
 
 **Classroom network changed 2026-11-19:** the Meta router stopped passing Tailscale traffic, so the proxy computer now uses a **NetBird** exit node on the same droplet (suggested by local IT). See *Classroom network* below and `vr-lab-proxy/README.md`. At school, turn on NetBird's exit node before opening Claude Code.
 
-**Next on the laptop (home):**
-1. Pull `main` in GitHub Desktop (PRs #19–#22 and this handoff). No Python requirements changed on 2026-11-19, so both `.venv` folders stay as they are; restart the proxy to pick up the `.env` fix (#20) and the Whisper hint (#21).
-2. Open `unity-project/` and let it recompile. The lab's instructions now come from `ClaudeProxySettings.DefaultSystemPrompt`; wording typed into the old *System Prompt* field of the laptop's settings asset is no longer used (*System Prompt Override* replaces the built-in text on one computer). Check Play mode once.
-3. **Compare proxy tokens.** Headsets only connect to a proxy whose `PROXY_TOKEN` matches the computer that built their app. The school token's fingerprint (first 8 hex characters of SHA-256) is `d1424a9e`. If the laptop's differs, copy the school value into the laptop's `.env` privately, restart the proxy, run **Claude Lab → Select Proxy Settings**, and rebuild. Matching tokens let any headset work with either computer.
-4. The 10th (home) headset needs a build from the laptop to get the lab snapshot. No NetBird at home: the home network reaches Anthropic directly.
-5. Then the student trial (Student trial kit above), and after it, read the question log next to the observation notes.
+**Laptop (home), caught up 2026-11-19:** `main` pulled (PRs #19–#23), and the proxy restarted with the `.env` fix (#20) and the Whisper hint (#21). Unity recompiled with no errors, and a Play-mode ball drop through the Unity MCP tools worked with the lab's built-in instructions (`ClaudeProxySettings.DefaultSystemPrompt`; the old *System Prompt* field is no longer used, and *System Prompt Override* replaces the built-in text on one computer). The laptop's `PROXY_TOKEN` has the same fingerprint as the school's (`d1424a9e`, first 8 hex characters of SHA-256), so any headset works with either computer. The 10th (home) headset has the lab-snapshot build from the laptop and answered a spoken question. No NetBird at home: the home network reaches Anthropic directly.
+
+**Next:** the student trial (Student trial kit above), and after it, read the question log next to the observation notes.
 
 Done so far:
 
