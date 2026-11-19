@@ -14,11 +14,13 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Header, HTTPException, Request
 from pydantic import BaseModel
 
-import questionlog
-import speech
-from discovery import DISCOVERY_PORT, local_ipv4_addresses, start_announcer
-
+# Load .env before importing our own modules: questionlog and speech read their settings
+# (LOG_QUESTIONS, WHISPER, WHISPER_MODEL) when imported, so .env has to be in place first.
 load_dotenv()
+
+import questionlog  # noqa: E402
+import speech  # noqa: E402
+from discovery import DISCOVERY_PORT, local_ipv4_addresses, start_announcer  # noqa: E402
 
 API_KEY = os.environ["ANTHROPIC_API_KEY"]
 PROXY_TOKEN = os.environ["PROXY_TOKEN"]  # shared secret so strangers can't use your key
