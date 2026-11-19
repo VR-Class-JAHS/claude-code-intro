@@ -8,7 +8,7 @@ assistant a question, press Release and read what happened.
 Claude Code ──MCP (stdio)──▶ unity-mcp/server.py ──TCP 127.0.0.1:8765 + token──▶ Claude Lab Bridge (in the Unity Editor)
 ```
 
-- **Bridge** (`claude-code-intro/Assets/ClaudeLab/Editor/ClaudeLabBridge.cs`): starts with the Unity Editor and listens on
+- **Bridge** (`unity-project/Assets/ClaudeLab/Editor/ClaudeLabBridge.cs`): starts with the Unity Editor and listens on
   `127.0.0.1` only. Each request needs a random token that Unity writes to `Library/ClaudeLabBridge/token.txt`
   (`Library` isn't in git), so only programs on this computer that can read the project folder can use it.
   Unity → **Claude Lab → Bridge Status** shows whether it's listening.
@@ -26,8 +26,7 @@ py -3.13 -m venv .venv          # Python 3.10 or newer
 Then open Unity on the project, start a **new** Claude Code session in the repo folder, and approve the
 `unity-vr-lab` server when Claude Code asks. `/mcp` in Claude Code shows whether it's connected.
 
-The session can start in the outer repo folder or the Unity project folder inside it (both are named
-`claude-code-intro`): `.mcp.json` starts the server through `cmd`, which looks for `unity-mcp\server.py` in the
+The session can start in the repo folder or in the Unity project folder inside it (`unity-project`): `.mcp.json` starts the server through `cmd`, which looks for `unity-mcp\server.py` in the
 session's folder and then one folder up. This makes the setup Windows-only, like the `.venv\Scripts` path already is.
 
 ## Tools
@@ -47,5 +46,9 @@ session's folder and then one folder up. This makes the setup Windows-only, like
 
 Tested 2026-11-18: enter Play mode → `lab_ask` "Drop a ball from 2 meters." → `lab_status` showed the reply and the
 ball waiting at 2 m → `lab_release` → the ball fell and came to rest → exit Play mode, no Console errors.
+
+After some trips through Play mode (with these tools or the Play button), SampleScene shows unsaved changes. Undo History
+(Window → General → Undo History) shows *Driving RectTransform*: Unity's UI layout re-sets the panel's sizes, and saving
+writes the same values back. Choose **Don't Save** (reopen the scene) before the next `play_mode` `enter`.
 
 Not included: running Unity Test Framework tests, saving scenes, building, and editor menus outside `Claude Lab/`.

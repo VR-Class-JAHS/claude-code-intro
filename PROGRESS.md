@@ -20,7 +20,7 @@ Answered 2026-11-18: a class fits the API key's rate limits with prompt caching 
 ## Working now
 
 - **vr-lab-proxy/**: FastAPI server that holds the Anthropic API key. Tested: `/health`, `/chat`, a wrong token returns 401, and a two-round `spawn_object` tool exchange.
-- **Unity client** (`claude-code-intro/Assets/ClaudeLab/`): `ClaudeAgent` runs the tool loop through the proxy. Tools: `spawn_object` (ball, block, pendulum, ramp) and `clear_lab`. Tested in Play mode in `SampleScene`: pressing **T** spawns a ball and a block that fall. **R** clears the lab. Pendulum and ramp also checked in Play mode (2026-11-17).
+- **Unity client** (`unity-project/Assets/ClaudeLab/`): `ClaudeAgent` runs the tool loop through the proxy. Tools: `spawn_object` (ball, block, pendulum, ramp) and `clear_lab`. Tested in Play mode in `SampleScene`: pressing **T** spawns a ball and a block that fall. **R** clears the lab. Pendulum and ramp also checked in Play mode (2026-11-17).
 - `SampleScene` already contains the **Claude Lab Assistant** object.
 - Player Settings → *Allow downloads over HTTP* = Always allowed (the proxy uses plain http).
 
@@ -92,7 +92,7 @@ Answered 2026-11-18: a class fits the API key's rate limits with prompt caching 
 ## Start a session
 
 1. In `vr-lab-proxy/`, run `.venv\Scripts\python -m uvicorn main:app --host 0.0.0.0 --port 8000`. At school, first follow *Each class* in `vr-lab-proxy/README.md` (Meta router + exit node).
-2. Open `claude-code-intro/` in Unity 6000.3.28f1 (upgraded from 23f1 on 2026-11-17) and open `Assets/Scenes/SampleScene`.
+2. Open `unity-project/` in Unity 6000.3.28f1 (upgraded from 23f1 on 2026-11-17) and open `Assets/Scenes/SampleScene`. The folder was called `claude-code-intro/` until 2026-11-18: on a computer that had it open before, close Unity before pulling, then in Unity Hub remove the old entry and **Add** `unity-project/`.
 3. Press Play, point a controller ray at a panel button and press **T** (the simulator trigger; **G** grabs, **Tab** switches controller). Keep the *Claude Test Prompt* component unticked: it also listens for T and would send a second request.
 
 ## Ideas for next steps

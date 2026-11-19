@@ -9,7 +9,7 @@ A Unity VR physics lab (Meta Quest 3/3S) where a Claude-powered assistant sets u
 ## Layout
 - `unity-mcp/`: MCP server that lets Claude Code drive the open Unity Editor through `Assets/ClaudeLab/Editor/ClaudeLabBridge.cs` (see its README).
 - `vr-lab-proxy/`: FastAPI proxy that holds the Anthropic API key (`main.py`) and announces itself on the Wi-Fi (`discovery.py`).
-- `claude-code-intro/`: the Unity project (Unity 6000.3.28f1, URP, XR Interaction Toolkit 3.5, OpenXR for Android/Quest).
+- `unity-project/`: the Unity project (Unity 6000.3.28f1, URP, XR Interaction Toolkit 3.5, OpenXR for Android/Quest).
   - `Assets/ClaudeLab/Scripts/`: `ClaudeAgent` (tool loop), `ClaudeLabPanel` (in-headset UI) and helpers.
   - `Assets/ClaudeLab/Scripts/Tools/`: one `LabTool` subclass per tool. New tools also go in `ToolTypes` in `Editor/ClaudeLabSetup.cs`.
   - `Assets/ClaudeLab/Editor/`: the **Claude Lab** menu (add assistant, add panel, proxy settings).

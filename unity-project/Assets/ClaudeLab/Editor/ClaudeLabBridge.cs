@@ -380,10 +380,12 @@ namespace ClaudeLab.EditorTools
                 case "enter":
                     if (SceneManager.GetActiveScene().isDirty)
                         return new JObject { ["started"] = false, ["reason"] = "The scene has unsaved changes. Save it in Unity first, or keep them out of Play mode." };
-                    EditorApplication.isPlaying = true;
+                    // The same call as the Play button, run right away (not through delayCall: that waits for a
+                    // repaint, which doesn't come while Unity is in the background).
+                    EditorApplication.EnterPlaymode();
                     return new JObject { ["started"] = true, ["note"] = "Entering Play mode reloads scripts; the bridge is back in a few seconds." };
                 case "exit":
-                    EditorApplication.isPlaying = false;
+                    EditorApplication.ExitPlaymode();
                     return new JObject { ["stopped"] = true };
                 default:
                     return new JObject { ["play_mode"] = EditorApplication.isPlaying };
