@@ -1,6 +1,6 @@
 # VR Lab + Claude: where we are
 
-Last updated: 2026-11-18
+Last updated: 2026-11-19
 
 ## Next session (start here)
 
@@ -8,9 +8,18 @@ Week 1 of the project plan is done, and the classroom network works on the schoo
 
 **Up next: the student trial** (19 students, 1st period). Everything for it is in the Student trial kit: https://claude.ai/artifact/9KMFPMNATPA6Hqst1AW1yB (an observation sheet to print, and a school computer checklist).
 
-**School computer, set up 2026-11-19:** the repo folder was deleted and cloned fresh, so its untracked files were recreated: `vr-lab-proxy/.env` (copied from the deleted folder in the Recycle Bin), Python 3.13 (`py install 3.13`), the proxy's `.venv`, the Whisper model, `unity-mcp/.venv`, `unity-project/` added in Unity Hub, the settings asset (**Claude Lab → Select Proxy Settings**), and the platform switched to Android. Tested: `/chat` and `/transcribe`; a Play-mode ball drop through the Unity MCP tools; and one Quest 3S on the Meta router with the new build, which asked two spoken questions and got answers. Left before class: install `unity-project/headset-build.apk` (gitignored) on the other headsets. Optional: `LOG_QUESTIONS=1` in `vr-lab-proxy/.env` (check school policy).
+**School computer, set up 2026-11-19:** the repo folder was deleted and cloned fresh, so its untracked files were recreated: `vr-lab-proxy/.env` (copied from the deleted folder in the Recycle Bin), Python 3.13 (`py install 3.13`), the proxy's `.venv`, the Whisper model, `unity-mcp/.venv`, `unity-project/` added in Unity Hub, the settings asset (**Claude Lab → Select Proxy Settings**), and the platform switched to Android. Tested: `/chat` and `/transcribe`; a Play-mode ball drop through the Unity MCP tools; and one Quest 3S on the Meta router with the new build, which asked two spoken questions and got answers.
+
+**Class headsets, 2026-11-19:** all 9 Quest 3S headsets (serials ending 046B, 08JG, 0996, 0GPL, 04BX, 09CB, 086R, 05VF, 04FY) have the 14:20 build from `main` with the lab snapshot (PR #22), installed over USB with `adb install -r -g`. The school proxy runs `main` with the Whisper hint (PR #21). The USB connection dropped during a few installs, and replugging fixed them; check each headset's app update time if one seems off. `LOG_QUESTIONS=1` is on in the school computer's `.env` (check school policy before the trial). Before class, delete `vr-lab-proxy/logs/2026-11-19.jsonl` on the school computer: it holds today's test questions.
 
 **Classroom network changed 2026-11-19:** the Meta router stopped passing Tailscale traffic, so the proxy computer now uses a **NetBird** exit node on the same droplet (suggested by local IT). See *Classroom network* below and `vr-lab-proxy/README.md`. At school, turn on NetBird's exit node before opening Claude Code.
+
+**Next on the laptop (home):**
+1. Pull `main` in GitHub Desktop (PRs #19–#22 and this handoff). No Python requirements changed on 2026-11-19, so both `.venv` folders stay as they are; restart the proxy to pick up the `.env` fix (#20) and the Whisper hint (#21).
+2. Open `unity-project/` and let it recompile. The lab's instructions now come from `ClaudeProxySettings.DefaultSystemPrompt`; wording typed into the old *System Prompt* field of the laptop's settings asset is no longer used (*System Prompt Override* replaces the built-in text on one computer). Check Play mode once.
+3. **Compare proxy tokens.** Headsets only connect to a proxy whose `PROXY_TOKEN` matches the computer that built their app. The school token's fingerprint (first 8 hex characters of SHA-256) is `d1424a9e`. If the laptop's differs, copy the school value into the laptop's `.env` privately, restart the proxy, run **Claude Lab → Select Proxy Settings**, and rebuild. Matching tokens let any headset work with either computer.
+4. The 10th (home) headset needs a build from the laptop to get the lab snapshot. No NetBird at home: the home network reaches Anthropic directly.
+5. Then the student trial (Student trial kit above), and after it, read the question log next to the observation notes.
 
 Done so far:
 
