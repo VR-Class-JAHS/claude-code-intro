@@ -39,7 +39,7 @@ While running, the proxy broadcasts a small signed announcement on UDP port 4780
 
 - **Prompt caching** is on for every `/chat` request: the tool list and system prompt (about 2,900 tokens, the same for every headset) and each conversation so far are cached. Cached tokens cost a tenth as much and don't count toward the API key's input-tokens-per-minute limit, which is what lets a class share one key. A burst of 12 simulated students on 2026-11-18: all answered, median wait 7.4 s, nothing rate-limited.
 - **Rate limits**: the SDK retries 429 and overload errors with backoff, up to `MAX_RETRIES` times (default 4). If a request is still limited, `/chat` returns 429 with a message the panel shows ("Claude is busy… ask again").
-- **Question log** (off by default): `LOG_QUESTIONS=1` in `.env` writes each question and answer round to `logs/YYYY-MM-DD.jsonl` (gitignored): time, the headset's address, the text, the tools used and token counts. Text only, no audio, no names. Check with school policy before keeping student questions, and delete the files when you're done with them.
+- **Question log** (off by default): `LOG_QUESTIONS=1` in `.env` writes each question and answer round to `logs/YYYY-MM-DD.jsonl` (gitignored): time, the headset's address, the text, the tools used and token counts. Each question also has `lab_state`, the snapshot of the lab the headset attached when it was asked, so you can see what the student was looking at. Text only, no audio, no names. Check with school policy before keeping student questions, and delete the files when you're done with them.
 
 ## Classroom network: Meta router + NetBird exit node
 

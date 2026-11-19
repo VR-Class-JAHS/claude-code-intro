@@ -80,7 +80,7 @@ namespace ClaudeLab
             SetBusy(true);
             // If anything fails mid-turn, roll back so the history never ends with an unanswered tool_use.
             int checkpoint = _messages.Count;
-            _messages.Add(new JObject { ["role"] = "user", ["content"] = userText });
+            _messages.Add(new JObject { ["role"] = "user", ["content"] = WithLabSnapshot(userText) });
             Log($"You: {userText}");
 
             bool finished = false;
@@ -133,6 +133,29 @@ namespace ClaudeLab
             SetBusy(false);
         }
 
+        /// <summary>
+        /// The student's words, followed by a snapshot of the lab taken now (from get_scene_state).
+        /// Students press Release, grab and throw objects without Claude being told, so without this Claude
+        /// can describe the lab from an out-of-date reading earlier in the conversation.
+        /// The snapshot is a separate block starting with &lt;lab_state&gt;, so the proxy's question log can tell it apart.
+        /// </summary>
+        JToken WithLabSnapshot(string userText)
+        {
+            var sceneState = tools.OfType<GetSceneStateTool>().FirstOrDefault();
+            if (sceneState == null) return userText;
+
+            ToolResult snapshot;
+            try { snapshot = sceneState.Execute(new JObject()); }
+            catch (Exception e) { Log($"Lab snapshot failed: {e.Message}"); return userText; }
+            if (snapshot.IsError) return userText;
+
+            return new JArray
+            {
+                new JObject { ["type"] = "text", ["text"] = userText },
+                new JObject { ["type"] = "text", ["text"] = $"<lab_state>\n{snapshot.Content}\n</lab_state>" },
+            };
+        }
+
         JObject RunTool(JToken block)
         {
             string name = (string)block["name"];
@@ -168,7 +191,7 @@ namespace ClaudeLab
         {
             var body = new JObject
             {
-                ["system"] = Settings.systemPrompt,
+                ["system"] = Settings.SystemPrompt,
                 ["tools"] = new JArray(tools.Where(t => t != null).Select(t => t.Definition)),
                 ["messages"] = _messages,
             };
