@@ -33,6 +33,7 @@ While running, the proxy broadcasts a small signed announcement on UDP port 4780
 - Needs Python 3.12 or 3.13: faster-whisper's PyAV dependency has no Python 3.15 build yet. Create the environment with `py -3.13 -m venv .venv`.
 - The model (`base.en`, about 145 MB) downloads from Hugging Face the first time the proxy starts, in the background, and is cached in `%USERPROFILE%\.cache\huggingface`. On the classroom network it downloads through the exit node like everything else.
 - `.env` options: `WHISPER_MODEL=tiny.en` (faster) or `small.en` (more accurate); `WHISPER=0` turns voice input off.
+- **Vocabulary hint** (2026-11-19): Whisper is given a short hint of the lab's words and phrasing (`DEFAULT_PROMPT` in `speech.py`). On 48 spoken test clips it raised exact transcriptions from 38 to 46, fixed "spheres" heard as "spears" and "land" heard as "landed", and stopped silence or noise coming out as "you". `WHISPER_PROMPT=...` in `.env` replaces it; `WHISPER_PROMPT=` (empty) turns it off. Restart the proxy after changing it.
 - On a laptop CPU, a few seconds of speech takes about half a second. Requests are handled one at a time, so many students talking at once will queue.
 
 ## Class use: caching, rate limits, question log

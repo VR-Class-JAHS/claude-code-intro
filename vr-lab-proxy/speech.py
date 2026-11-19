@@ -6,6 +6,13 @@ the same as a typed question.
 The model downloads from Hugging Face the first time (base.en is about 145 MB) and is cached in the
 user's .cache\\huggingface folder. Pick another size with WHISPER_MODEL in .env (tiny.en is faster,
 small.en more accurate). WHISPER=0 turns voice input off.
+
+WHISPER_PROMPT is a hint of the words and phrasing to expect (faster-whisper's initial_prompt). The default
+lists the lab's objects and how students talk about them. Tested 2026-11-19 on 48 spoken clips (two
+Windows voices, two speeds, with and without noise): 38 transcribed exactly right without it, 46 with it.
+It fixed the mishearings seen in a headset test ("spheres" heard as "spears", "land" as "landed"), and
+stopped Whisper turning silence or noise into the word "you"; an off-topic question came out the same.
+Set WHISPER_PROMPT= (empty) in .env to turn the hint off, or write your own.
 """
 
 import io
@@ -23,6 +30,12 @@ os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS_WARNING", "1")
 
 WHISPER_MODEL = os.environ.get("WHISPER_MODEL", "base.en")
 ENABLED = os.environ.get("WHISPER", "1") != "0"
+DEFAULT_PROMPT = (
+    "A student in a VR physics lab talks to the lab assistant. Spawn a ball, a sphere, a block, a pendulum "
+    "or a ramp. Drop the ball from 2 meters. Make one sphere twice the mass. I think they will both land at "
+    "the same time. Release. Gravity on the Moon. Graph the kinetic and potential energy."
+)
+PROMPT = os.environ.get("WHISPER_PROMPT", DEFAULT_PROMPT).strip() or None
 MAX_SECONDS = 20
 
 _model = None
@@ -92,6 +105,7 @@ def transcribe(data: bytes) -> dict:
     if len(audio) < 16000 * 0.3:
         return {"text": "", "seconds": len(audio) / 16000, "note": "too short"}
     started = time.time()
-    segments, _info = _get_model().transcribe(audio, language="en", beam_size=1, vad_filter=False)
+    segments, _info = _get_model().transcribe(audio, language="en", beam_size=1, vad_filter=False,
+                                              initial_prompt=PROMPT)
     text = " ".join(s.text.strip() for s in segments).strip()
     return {"text": text, "seconds": round(len(audio) / 16000, 2), "took_s": round(time.time() - started, 2)}

@@ -79,6 +79,7 @@ Answered 2026-11-18: a class fits the API key's rate limits with prompt caching 
 - **Exit lab button** (tested in Play mode and on the Quest 3S, 2026-11-18): beside *New conversation* (`Scripts/ExitButton.cs`, *Show Exit Button* on the panel). Press twice within 3 s to quit: back to the Quest home, or out of Play mode in the Editor.
   - Needs **Python 3.12 or 3.13** for the proxy: faster-whisper's PyAV dependency has no Python 3.15 build yet. Rebuilt the laptop's `.venv` on 3.13 (`py -3.13 -m venv --clear .venv`, then `pip install -r requirements.txt`).
   - The Whisper model (about 145 MB) downloads from Hugging Face the first time the proxy starts and is cached in `%USERPROFILE%\.cache\huggingface`. `WHISPER_MODEL` in `.env` picks another size; `WHISPER=0` turns voice off.
+  - **Vocabulary hint** (2026-11-19): in a headset test Whisper heard "spheres" as "spears" and "land" as "landed". `speech.py` now gives Whisper a hint of the lab's words (`WHISPER_PROMPT` in `.env` overrides it; empty turns it off). On 48 spoken test clips, exact transcriptions went from 38 to 46, both mishearings were fixed, and silence or noise no longer comes out as "you". Tested through `/transcribe` on the school computer; not yet retested in a headset.
 
 - **Classroom readiness** (2026-11-18, proxy changes tested with simulated students and in Play mode):
   - Account limits (read from the API's response headers): 1,000 requests, 500,000 input tokens and 80,000 output tokens per minute.
