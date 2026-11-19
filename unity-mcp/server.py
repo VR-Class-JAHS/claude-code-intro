@@ -17,7 +17,7 @@ from pathlib import Path
 
 from mcp.server.mcpserver import MCPServer
 
-PROJECT = Path(os.environ.get("UNITY_PROJECT", Path(__file__).resolve().parent.parent / "claude-code-intro"))
+PROJECT = Path(os.environ.get("UNITY_PROJECT", Path(__file__).resolve().parent.parent / "unity-project"))
 TOKEN_FILE = PROJECT / "Library" / "ClaudeLabBridge" / "token.txt"
 PORT = int(os.environ.get("CLAUDE_LAB_BRIDGE_PORT", "8765"))
 WAIT_FOR_UNITY_S = 45  # long enough for a script reload or entering Play mode
