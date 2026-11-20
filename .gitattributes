@@ -4,3 +4,7 @@
 # Files copied onto the Linux droplet must keep Linux line endings, even in a Windows checkout.
 vr-lab-proxy/droplet/* text eol=lf
 *.sh text eol=lf
+
+# cmd.exe needs Windows line endings to find its labels reliably.
+*.cmd text eol=crlf
+*.bat text eol=crlf
