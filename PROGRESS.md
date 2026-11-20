@@ -20,6 +20,14 @@ Week 1 of the project plan is done, and the classroom network works on the schoo
 
 **Retested 2026-11-20 on the Meta router with a headset:** with Tailscale disconnected, the school computer on `NETGEAR_11ac` reached `vr-lab-exit` through NetBird's relay and Anthropic answered. Headset `10.79.110.145` asked by voice "Spawn a cube, a meter above the ground" (transcribed correctly; Claude spawned a 1 kg block at 1 m waiting for Release), Release dropped it, and the next question ("Clear the lab.") carried a lab snapshot showing the block resting on the floor; Claude cleared the lab. Not exercised in a headset: asking Claude to describe the lab after Release (passed in Play mode on 2026-11-19).
 
+**First student try-out, 2026-11-20** (one student, school computer, Meta router; question log): 5 questions, all answered. Seen: one recording cut off mid-sentence (let go of *Hold to talk* too early), the student grabbed a ball instead of pressing Release (the snapshot handled it), "wait, what do I ask?" before trying a ramp, and two problems:
+- **Ramps (fixed, see *Ramps* below):** "roll a ball down a ramp" put the ball in the row *beside* the ramp; Claude then spawned a duplicate and asked the student to move it by hand.
+- **No walls (open):** balls roll on forever after a drop or ramp (54 m and 109 m away in the try-out; 13 m behind the student in the ramp test). Idea: walls or an edge around the lab area, or remove objects that roll too far.
+
+**Ramps (2026-11-20, tested in Play mode, not yet in a headset):** `spawn_object` takes `on_ramp` (a ramp's name, or `newest`) for a ball or block, and places it near the top of the slope, waiting for Release. Before making a ramp it measures the free floor ahead (at floor level, mid-height and top height, ignoring the lab's own objects and loose props) and refuses one that would run into a wall or object, telling Claude a height and an angle that fit. In the template room a 2 m, 25° ramp ran 4.3 m and went through `Wall_Front`, which pushed the ball off sideways (found with a temporary collision log). Tested: "Roll a ball down a ramp" → 2 m refused (suggested at most 0.9 m) → 0.9 m ramp, ball at the top → Release → it rolled straight down and off the bottom. A block on the default 25° ramp won't slide with the default friction (0.6 > tan 25°); the tool says so, so Claude can lower friction or steepen the ramp.
+
+**Unity quirk seen 2026-11-20:** twice, pressing Play straight after a recompile started a broken Play session: tens of thousands of `NullReferenceException`s from the XR template's own UI components (`LazyFollow`, the affordance system) and a blank proxy address (`Request to /chat failed`). Stopping Play mode and starting it again after Unity settled gave a clean session each time. If the Console floods with red errors, restart Play mode.
+
 **Next:** the student trial (Student trial kit above). Before class: NetBird's exit node on, Tailscale disconnected, delete the test entries in `vr-lab-proxy/logs/`. After it, read the question log next to the observation notes.
 
 Done so far:
@@ -132,5 +140,7 @@ Answered 2026-11-18: a class fits the API key's rate limits with prompt caching 
 
 - ~~Voice input, so students can ask their own questions instead of only the preset buttons.~~ Done 2026-11-18 (PR #12).
 - Show the panel near the student wherever they stand (follow or summon it).
+- Walls or an edge around the lab area, so balls don't roll away forever (seen in the first student try-out, 2026-11-20).
+- Help students who don't know what to ask: starter prompts, or a hint to keep holding *Hold to talk* while speaking (one recording was cut off).
 - Check each new tool on its own: measure_object after a student drop, lab_timer, set_gravity on Moon and zero.
 - ~~Check whether school Wi-Fi passes UDP broadcasts and device-to-device traffic~~ Done 2026-11-18: class uses the Meta router instead (see *Classroom network*).
