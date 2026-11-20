@@ -59,7 +59,10 @@ namespace ClaudeLab
                   "so they can predict and watch. "
                 : "A ball or block appears with its bottom at height_m and falls immediately under gravity. ") +
             "A pendulum hangs from a pivot at height_m and starts swinging immediately. " +
-            "A ramp is a fixed incline whose top edge is at height_m.";
+            "A ramp is a fixed incline whose top edge is at height_m. " +
+            "To roll a ball (or slide a block) down a ramp, spawn the ramp first, then spawn the ball or block with " +
+            "on_ramp set to that ramp's name: it appears at the top of the slope instead of in the row, and starts " +
+            "down the ramp when released.";
 
         public override JObject InputSchema => JObject.Parse(@"{
             ""type"": ""object"",
@@ -67,7 +70,8 @@ namespace ClaudeLab
                 ""type"":      { ""type"": ""string"", ""enum"": [""ball"", ""block"", ""pendulum"", ""ramp""] },
                 ""height_m"":  { ""type"": ""number"", ""description"": ""Height above the floor in meters, 0 to 10. Default 1."" },
                 ""mass_kg"":   { ""type"": ""number"", ""description"": ""Mass in kilograms for ball, block or pendulum bob. Default 1."" },
-                ""angle_deg"": { ""type"": ""number"", ""description"": ""Ramp incline in degrees, 5 to 60. Default 25. Ramps only."" }
+                ""angle_deg"": { ""type"": ""number"", ""description"": ""Ramp incline in degrees, 5 to 60. Default 25. Ramps only."" },
+                ""on_ramp"":   { ""type"": ""string"", ""description"": ""Ball or block only: the name of a ramp already in the lab (e.g. 'ramp #2'), or 'newest' for the most recent ramp. The object is placed at the top of that ramp's slope, ignoring height_m."" }
             },
             ""required"": [""type""]
         }");
@@ -82,7 +86,21 @@ namespace ClaudeLab
             float mass = Mathf.Clamp(input.Value<float?>("mass_kg") ?? 1f, 0.01f, 100f);
             float angle = Mathf.Clamp(input.Value<float?>("angle_deg") ?? 25f, 5f, 60f);
 
+            string onRamp = ((string)input["on_ramp"])?.Trim();
+            if (!string.IsNullOrEmpty(onRamp))
+            {
+                if (type != "ball" && type != "block")
+                    return ToolResult.Error("on_ramp only works for a ball or a block.");
+                return SpawnOnRamp(type, mass, onRamp);
+            }
+
             Vector3 floorPoint = NextFloorPoint();
+            if (type == "ramp")
+            {
+                string tooLong = CheckRampFits(floorPoint, Mathf.Max(height, 0.1f), angle);
+                if (tooLong != null) return ToolResult.Error(tooLong);
+            }
+
             GameObject go;
             switch (type)
             {
@@ -100,6 +118,119 @@ namespace ClaudeLab
                 ? (holdUntilRelease ? " It is waiting for the student to press Release." : " It is falling now.")
                 : "";
             return ToolResult.Ok($"Spawned {go.name} at height {height:0.##} m{extra}.{state}");
+        }
+
+        /// <summary>
+        /// Places a ball or block near the top of a ramp's slope, just above the surface, so it rolls or slides
+        /// down when released. Added 2026-11-20: a student asked to "roll a ball down a ramp" and the ball appeared
+        /// in the row beside the ramp, with no way for Claude to move it over.
+        /// </summary>
+        ToolResult SpawnOnRamp(string type, float mass, string rampName)
+        {
+            Transform ramp = FindRamp(rampName);
+            if (ramp == null)
+                return ToolResult.Error(rampName.ToLowerInvariant() == "newest"
+                    ? "There is no ramp in the lab. Spawn a ramp first."
+                    : $"No ramp named '{rampName}'. Use get_scene_state for names, or 'newest'.");
+
+            // The ramp is a thin box: local +z runs up the slope, local +y is the surface normal (see MakeRamp).
+            float length = ramp.localScale.z;
+            float thickness = ramp.localScale.y;
+            float halfHeight = type == "ball" ? 0.1f : 0.125f;
+            const float fromTop = 0.2f; // keep the whole object on the slope, not hanging off the top edge
+            const float gap = 0.01f;
+            Vector3 pos = ramp.position
+                          + ramp.forward * (length / 2f - fromTop)
+                          + ramp.up * (thickness / 2f + halfHeight + gap);
+
+            GameObject go = type == "ball"
+                ? MakeBall(pos - Vector3.up * 0.1f, 0f, mass)     // MakeBall/MakeBlock add their half height back
+                : MakeBlock(pos - Vector3.up * 0.125f, 0f, mass);
+            if (type == "block") go.transform.rotation = ramp.rotation; // sit flat on the slope
+
+            _spawnIndex++;
+            go.name = $"{type} #{_spawnIndex}";
+
+            float angle = Vector3.Angle(Vector3.ProjectOnPlane(ramp.forward, Vector3.up), ramp.forward);
+            float bottom = go.GetComponent<Collider>().bounds.min.y - SpawnArea.position.y;
+            string state = holdUntilRelease
+                ? " It is waiting for the student to press Release, then it goes down the ramp."
+                : " It is going down the ramp now.";
+            string slideNote = "";
+            const float defaultFriction = 0.6f;
+            if (type == "block" && defaultFriction >= Mathf.Tan(angle * Mathf.Deg2Rad))
+                slideNote = $" Note: with the default friction ({defaultFriction}) a block will NOT slide on a {angle:0.#} deg ramp " +
+                            $"(it needs friction below {Mathf.Tan(angle * Mathf.Deg2Rad):0.##}); lower its friction with set_property " +
+                            "or use a steeper ramp.";
+            return ToolResult.Ok($"Spawned {go.name} ({mass:0.##} kg) at the top of {ramp.name} ({angle:0.#} deg), " +
+                                 $"bottom {bottom:0.00} m above the floor.{state}{slideNote}");
+        }
+
+        /// <summary>
+        /// A ramp runs forward from its floor point by topHeight / tan(angle). If a wall or other fixed object is
+        /// closer than that, the top of the ramp would go through it (2026-11-20: a 2 m, 25 deg ramp poked through
+        /// the template room's Wall_Front, and a ball placed at its top was pushed off sideways). Returns an error
+        /// message with heights and angles that do fit, or null if the ramp fits.
+        /// </summary>
+        string CheckRampFits(Vector3 floorPoint, float topHeight, float angleDeg)
+        {
+            float space = FreeSpaceAhead(floorPoint, topHeight);
+            if (Fits(topHeight, angleDeg, space)) return null;
+
+            float run = topHeight / Mathf.Tan(angleDeg * Mathf.Deg2Rad);
+            // The space depends on the height (a table can block a tall ramp but not a low one), so search for
+            // suggestions that really fit instead of scaling: Claude should need only one retry.
+            float maxHeight = 0f;
+            for (float h = topHeight - 0.05f; h >= 0.1f; h -= 0.05f)
+                if (Fits(h, angleDeg, FreeSpaceAhead(floorPoint, h))) { maxHeight = h; break; }
+            float minAngle = 0f;
+            for (float a = Mathf.Ceil(angleDeg + 1f); a <= 60f; a += 1f)
+                if (Fits(topHeight, a, space)) { minAngle = a; break; }
+
+            string options = maxHeight > 0f
+                ? $"Use a top height of at most {Mathf.Floor(maxHeight * 10f) / 10f:0.0} m at {angleDeg:0.#} deg"
+                : $"No ramp at {angleDeg:0.#} deg fits here";
+            if (minAngle > 0f) options += $", or keep {topHeight:0.##} m and make it {minAngle:0} deg or steeper";
+            return $"A {topHeight:0.##} m ramp at {angleDeg:0.#} deg runs {run:0.0} m forward, but there is only " +
+                   $"{space:0.0} m of floor before a wall or object. {options}.";
+        }
+
+        static bool Fits(float topHeight, float angleDeg, float space)
+        {
+            const float clearance = 0.3f;
+            return topHeight / Mathf.Tan(angleDeg * Mathf.Deg2Rad) + clearance <= space;
+        }
+
+        /// <summary>Distance forward from a floor point to the nearest wall or fixed object, ignoring the lab's own objects.</summary>
+        float FreeSpaceAhead(Vector3 floorPoint, float topHeight)
+        {
+            float nearest = 50f;
+            // Check low, middle and top of where the ramp would be, so a ledge or table at any height counts.
+            foreach (float h in new[] { 0.1f, topHeight / 2f, Mathf.Max(topHeight - 0.05f, 0.1f) })
+            {
+                var hits = Physics.RaycastAll(floorPoint + Vector3.up * h, SpawnArea.forward, nearest,
+                                              Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
+                foreach (var hit in hits)
+                {
+                    if (hit.collider.transform.IsChildOf(Container)) continue;           // other lab objects
+                    if (hit.rigidbody != null && !hit.rigidbody.isKinematic) continue;   // loose props, players' hands
+                    nearest = Mathf.Min(nearest, hit.distance);
+                }
+            }
+            return nearest;
+        }
+
+        Transform FindRamp(string name)
+        {
+            Transform newest = null;
+            for (int i = 0; i < Container.childCount; i++)
+            {
+                var t = Container.GetChild(i);
+                if (LabQuery.TypeOf(t) != "ramp") continue;
+                if (string.Equals(t.name, name, System.StringComparison.OrdinalIgnoreCase)) return t;
+                newest = t; // children are in spawn order, so the last ramp is the newest
+            }
+            return name.ToLowerInvariant() == "newest" ? newest : null;
         }
 
         Vector3 NextFloorPoint()
