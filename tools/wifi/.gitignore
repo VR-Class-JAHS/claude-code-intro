@@ -1,0 +1,2 @@
+# Exported Wi-Fi profiles hold the network password in plain text.
+*.xml
