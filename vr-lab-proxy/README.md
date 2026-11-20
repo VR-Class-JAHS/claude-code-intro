@@ -81,7 +81,7 @@ A DigitalOcean Basic droplet, $4/month (512 MB). It's billed by the hour, and a 
    - DigitalOcean **Networking → Firewalls → Create Firewall** (`vr-lab-exit-lockdown`): no inbound rules, default outbound rules, applied to `vr-lab-exit`.
    - Over `ssh root@vr-lab-exit`: `systemctl disable --now ssh.socket ssh.service`, which turns off the normal SSH server so nothing answers port 22 from the internet. Tailscale SSH keeps working.
 
-   Afterwards, manage the droplet with `ssh root@vr-lab-exit`. DigitalOcean's Web Console no longer works. If Tailscale ever breaks on it, use **Access → Recovery Console** with the root password, and `systemctl enable --now ssh.socket` turns the normal SSH server back on.
+   Afterwards, manage the droplet with `ssh root@vr-lab-exit`. DigitalOcean's Web Console no longer works. If Tailscale ever breaks on it, use the Recovery Console (the droplet's **Settings** tab → *Recovery console* → **Launch Console**; log in as `root` with the droplet password; pasting may not work, so keep commands short), and `systemctl enable --now ssh.socket` turns the normal SSH server back on.
 
    Testing tip: with the exit node on, connecting to the droplet's *public* IP goes through the tunnel and bypasses the DigitalOcean firewall, so it can't test the firewall. After the lockdown, the public IP refuses port 22 even that way.
 
@@ -101,17 +101,24 @@ A DigitalOcean Basic droplet, $4/month (512 MB). It's billed by the hour, and a 
 
    NetBird needs no inbound ports on the droplet: when it can't connect directly, it uses its relay over HTTPS 443.
 
+6. Install the NetBird watchdog (done 2026-11-20). On 2026-11-20 the droplet's NetBird lost its connection to NetBird's service (*Management: Disconnected … error reading from server: EOF*) and never reconnected by itself, so every client's exit node dropped ("peer unreachable") on any network until `systemctl restart netbird`. `droplet/netbird-watchdog.sh` checks every minute and restarts NetBird after 3 disconnected checks in a row. From the repo folder on a computer with Tailscale (exit node **None**):
+   ```powershell
+   scp vr-lab-proxy\droplet\netbird-watchdog.* root@vr-lab-exit:/tmp/
+   ssh root@vr-lab-exit "install -m 755 /tmp/netbird-watchdog.sh /usr/local/bin/ && install -m 644 /tmp/netbird-watchdog.service /tmp/netbird-watchdog.timer /etc/systemd/system/ && systemctl daemon-reload && systemctl enable --now netbird-watchdog.timer"
+   ```
+   What it did: `journalctl -t netbird-watchdog`. Test without restarting anything: see the comment at the top of the script.
+
 Droplet upkeep: ignore the *New release '26.04 LTS' available* message (24.04 is supported for years). When it says *System restart required*, run `reboot` over `ssh root@vr-lab-exit`, wait a minute, and reconnect. Tailscale and NetBird both start on boot.
 
 ### Proxy computer (once)
 
-1. Install the **NetBird** Windows app (needs admin rights) and sign in to the same NetBird account.
-2. Install **Tailscale** for Windows and sign in, only for `ssh root@vr-lab-exit`. Its exit node stays on **None**: two exit nodes at once would conflict.
+1. Install the **NetBird** Windows app (needs admin rights) and sign in to the same NetBird account. Then in the NetBird dashboard, **Peers →** this computer: turn **Login expiration** off, so it doesn't need signing in again before a class. On 2026-11-20 the school computer's sign-in had lapsed and it came back as a second, new peer; delete stale duplicates of the same computer.
+2. Install **Tailscale** for Windows and sign in, only for `ssh root@vr-lab-exit`. Its exit node stays on **None**: two exit nodes at once would conflict. Keep Tailscale **disconnected** (tray → *Disconnect*; you stay signed in) and connect it only to manage the droplet. On 2026-11-20, signing it back in re-selected an old exit node and cut the internet, and starting it while NetBird was running briefly sent traffic around the tunnel.
 3. Add the firewall rule from **Setup** above. Windows marks both school networks as Public; the rule covers that.
 
 ### Each class
 
-1. NetBird tray icon → exit node → `vr-lab-exit`. At school, do this *before* opening Claude Code: it needs the exit node to reach Anthropic too. Tailscale's exit node stays on **None**.
+1. NetBird tray icon → exit node → `vr-lab-exit`. At school, do this *before* opening Claude Code: it needs the exit node to reach Anthropic too. Leave Tailscale disconnected during class.
 2. Connect the proxy computer to `NETGEAR_11ac` (Wi-Fi, or Ethernet to a LAN port).
 3. Check that Anthropic is reachable. A 4xx code such as `401`, `404` or `405` means Anthropic answered; a hang, `000`, or a redirect code means it's still filtered:
    ```powershell
