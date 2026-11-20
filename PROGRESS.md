@@ -36,6 +36,8 @@ Week 1 of the project plan is done, and the classroom network works on the schoo
 
 **Next:** the student trial (Student trial kit above). Before class: NetBird's exit node on, Tailscale disconnected, delete the test entries in `vr-lab-proxy/logs/`. After it, read the question log next to the observation notes.
 
+**Class laptops' Wi-Fi (added 2026-11-20, PR #31):** `tools/wifi/switch-wifi.cmd` moves a Windows class laptop onto one Wi-Fi network: export the network once to a USB stick from a laptop already on it, then double-click the script on each laptop (steps in `tools/wifi/README.md`). The exported `.xml` holds the Wi-Fi password in plain text: keep it on the stick, never in the repo. Tested on the home laptop only in `/check` mode and its error cases; **not yet tried for real on a class laptop**, and school-managed laptops may block adding networks. Try one laptop first.
+
 Done so far:
 
 1. **Proxy settings link fixed** (2026-11-18): the settings asset now lives in `Assets/ClaudeLab/Settings/Resources/` and is loaded by name, so the scene no longer links to it. On the laptop, Unity moved the old asset there by itself, and Play mode works (checked 2026-11-18).
