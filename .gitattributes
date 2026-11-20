@@ -1,2 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Files copied onto the Linux droplet must keep Linux line endings, even in a Windows checkout.
+vr-lab-proxy/droplet/* text eol=lf
+*.sh text eol=lf

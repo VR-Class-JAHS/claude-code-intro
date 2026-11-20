@@ -101,11 +101,18 @@ A DigitalOcean Basic droplet, $4/month (512 MB). It's billed by the hour, and a 
 
    NetBird needs no inbound ports on the droplet: when it can't connect directly, it uses its relay over HTTPS 443.
 
+6. Install the NetBird watchdog (done 2026-11-20). On 2026-11-20 the droplet's NetBird lost its connection to NetBird's service (*Management: Disconnected … error reading from server: EOF*) and never reconnected by itself, so every client's exit node dropped ("peer unreachable") on any network until `systemctl restart netbird`. `droplet/netbird-watchdog.sh` checks every minute and restarts NetBird after 3 disconnected checks in a row. From the repo folder on a computer with Tailscale (exit node **None**):
+   ```powershell
+   scp vr-lab-proxy\droplet\netbird-watchdog.* root@vr-lab-exit:/tmp/
+   ssh root@vr-lab-exit "install -m 755 /tmp/netbird-watchdog.sh /usr/local/bin/ && install -m 644 /tmp/netbird-watchdog.service /tmp/netbird-watchdog.timer /etc/systemd/system/ && systemctl daemon-reload && systemctl enable --now netbird-watchdog.timer"
+   ```
+   What it did: `journalctl -t netbird-watchdog`. Test without restarting anything: see the comment at the top of the script.
+
 Droplet upkeep: ignore the *New release '26.04 LTS' available* message (24.04 is supported for years). When it says *System restart required*, run `reboot` over `ssh root@vr-lab-exit`, wait a minute, and reconnect. Tailscale and NetBird both start on boot.
 
 ### Proxy computer (once)
 
-1. Install the **NetBird** Windows app (needs admin rights) and sign in to the same NetBird account.
+1. Install the **NetBird** Windows app (needs admin rights) and sign in to the same NetBird account. Then in the NetBird dashboard, **Peers →** this computer: turn **Login expiration** off, so it doesn't need signing in again before a class. On 2026-11-20 the school computer's sign-in had lapsed and it came back as a second, new peer; delete stale duplicates of the same computer.
 2. Install **Tailscale** for Windows and sign in, only for `ssh root@vr-lab-exit`. Its exit node stays on **None**: two exit nodes at once would conflict.
 3. Add the firewall rule from **Setup** above. Windows marks both school networks as Public; the rule covers that.
 

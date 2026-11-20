@@ -1,0 +1,7 @@
+[Unit]
+Description=Restart NetBird if it has lost its management connection
+After=netbird.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh /usr/local/bin/netbird-watchdog.sh

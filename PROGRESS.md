@@ -1,6 +1,6 @@
 # VR Lab + Claude: where we are
 
-Last updated: 2026-11-19
+Last updated: 2026-11-20
 
 ## Next session (start here)
 
@@ -16,7 +16,9 @@ Week 1 of the project plan is done, and the classroom network works on the schoo
 
 **Laptop (home), caught up 2026-11-19:** `main` pulled (PRs #19–#23), and the proxy restarted with the `.env` fix (#20) and the Whisper hint (#21). Unity recompiled with no errors, and a Play-mode ball drop through the Unity MCP tools worked with the lab's built-in instructions (`ClaudeProxySettings.DefaultSystemPrompt`; the old *System Prompt* field is no longer used, and *System Prompt Override* replaces the built-in text on one computer). The laptop's `PROXY_TOKEN` has the same fingerprint as the school's (`d1424a9e`, first 8 hex characters of SHA-256), so any headset works with either computer. The 10th (home) headset has the lab-snapshot build from the laptop and answered a spoken question. No NetBird at home: the home network reaches Anthropic directly.
 
-**Next:** the student trial (Student trial kit above), and after it, read the question log next to the observation notes.
+**NetBird outage fixed, 2026-11-20 (school computer):** the exit node failed on every network, the hotspot included: the school computer connected, then about 30 s later reported *"Exit node connection lost … peer unreachability"*. Cause: the droplet's NetBird had lost its connection to NetBird's service (*Management/Signal: Disconnected, error reading from server: EOF*) and never reconnected; the droplet itself was healthy (memory fine, no out-of-memory kills, internet fine). `systemctl restart netbird` on the droplet fixed it, and a 10-minute monitor on the hotspot then showed the tunnel holding (P2P). Added a watchdog on the droplet that does that restart automatically after 3 minutes disconnected (`vr-lab-proxy/droplet/`, installed and dry-run tested). Also: the school computer's NetBird sign-in had lapsed and it came back as a new peer, so the stale one was deleted and **Login expiration** turned off for it. Tailscale, signing back in, re-selected `vr-lab-exit` as its exit node and cut the internet; keep its exit node on **None** (it's only for `ssh root@vr-lab-exit`), and start it before class, not during (one 15-second blip in routing when it started). Not yet tested after this fix: the Meta router and a headset.
+
+**Next:** at school, check NetBird on the Meta router with a headset before class, then the student trial (Student trial kit above), and after it, read the question log next to the observation notes.
 
 Done so far:
 
