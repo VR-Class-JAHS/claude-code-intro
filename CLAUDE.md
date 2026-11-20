@@ -14,7 +14,8 @@ A Unity VR physics lab (Meta Quest 3/3S) where a Claude-powered assistant sets u
 - `unity-project/`: the Unity project (Unity 6000.3.28f1, URP, XR Interaction Toolkit 3.5, OpenXR for Android/Quest).
   - `Assets/ClaudeLab/Scripts/`: `ClaudeAgent` (tool loop), `ClaudeLabPanel` (in-headset UI) and helpers.
   - `Assets/ClaudeLab/Scripts/Tools/`: one `LabTool` subclass per tool. New tools also go in `ToolTypes` in `Editor/ClaudeLabSetup.cs`.
-  - `Assets/ClaudeLab/Editor/`: the **Claude Lab** menu (add assistant, add panel, proxy settings).
+  - `Assets/ClaudeLab/Editor/`: the **Claude Lab** menu (add assistant, add panel, proxy settings, build the lab room).
+  - `SampleScene` holds only the lab: the XR rig, Lighting, EventSystem, the Claude Lab Assistant and panel, and the *Lab Room* (8.5 × 6 m, built by **Claude Lab → Build Lab Room**, lined up with the spawn area). The VR template's demo objects, UI, room and teleport setup were removed on 2026-11-20.
 - `workshop/`: the workshop's finished `PaintObjectTool.cs`. It stays outside `unity-project/` so Unity doesn't compile it next to a participant's own copy.
 
 ## How we work
