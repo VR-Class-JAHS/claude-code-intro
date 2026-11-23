@@ -44,6 +44,13 @@ Week 1 of the project plan is done, and the classroom network works on the schoo
 - **The hotspot gave the headset no IPv4 address:** the Quest's Wi-Fi details showed only an IPv6 address, with no IPv4 field at all, even with *Maximize Compatibility* on. The lab app needs IPv4. Fixed with a static IP on the Quest: `172.20.10.5`, gateway and DNS `172.20.10.1`, prefix length 28. The hotspot's addresses run from .1 to .14 and the laptop had .2, so give more headsets .6, .7 and so on. Set the headset back to automatic IP settings afterwards. Before that, the Quest had also switched back to another saved Wi-Fi network by itself.
 - **Symantec Endpoint Protection** is the firewall Windows reports on this laptop, and the Windows rule shows as *Inactive* in the active policy. Symantec didn't block the headset in the end: the first Quest browser test after the static IP failed, and a later one reached `/health`. It isn't clear whether the Windows rule was needed; keep it. If headsets can't reach this laptop, suspect Symantec, which school IT manages.
 - **Untested fallback:** a USB cable with `adb reverse tcp:8000 tcp:8000` and the proxy started with `ANNOUNCE=0`, so the app falls back to its `localhost` address. `adb` comes with Unity on this laptop (`C:\Program Files\Unity\Hub\Editor\6000.3.24f1\Editor\Data\PlaybackEngines\AndroidPlayer\SDK\platform-tools\adb.exe`).
+- **What the demo's question log showed** (8 questions from teachers, 14:39–15:29, all answered, no errors; the log stays on that laptop):
+  - The first open question was "What can you do?". Claude listed its tools and suggested a drop on the Moon, which set the direction for the rest of the demo. On the Moon it put a 1 kg ball beside a 5 kg block and asked "Which one do you think lands first?" before Release. Afterwards it explained they landed together (1.57 s), because mass doesn't change fall time.
+  - **Missed Release:** "I am pressing release and nothing is happening", then "I was looking in the wrong direction." The drop had already happened. The lab snapshot let Claude tell them so and reset the drop. This is the second time someone has missed the moment of a drop (the student on Nov 20 grabbed a ball instead).
+  - **Mishearing:** "let's scrap stuff on the Moon" (almost certainly "drop"). Claude understood anyway.
+  - **Empty recordings:** at least two recordings near the end reached `/transcribe` without a question following, probably silence or *Hold to talk* let go too early. The question log doesn't record these, so the proxy's screen is the only place they show.
+  - **A reaction sent as a question:** "Oh wow." went to Claude, which guessed they had missed the drop.
+  - Gravity stayed on the Moon after *Clear the lab*; Claude asked whether to go back to Earth. After a 17-minute pause the prompt cache had expired and the next question re-sent about 6,200 tokens; the whole demo still cost a few cents. Nobody looked at the height graph Claude set up for the second drop.
 
 Done so far:
 
@@ -158,4 +165,8 @@ Answered 2026-11-18: a class fits the API key's rate limits with prompt caching 
 - ~~Walls or an edge around the lab area, so balls don't roll away forever~~ Done 2026-11-20 (*Lab room*).
 - Help students who don't know what to ask: starter prompts, or a hint to keep holding *Hold to talk* while speaking (one recording was cut off).
 - Check each new tool on its own: measure_object after a student drop, lab_timer, set_gravity on Moon and zero.
+- Make Release hard to miss: a sound, or a highlight on the objects as they drop, so people look the right way. In the Nov 23 demo a teacher missed the drop, and a student missed one on Nov 20.
+- A *What can you do?* preset button: it was the first open question in the Nov 23 demo, and Claude's answer led straight into an experiment.
+- Add "drop" to the Whisper vocabulary hint (`speech.py`): "drop stuff" was heard as "scrap stuff" in the Nov 23 demo.
+- Count empty recordings in the question log. Two or more came out empty in the Nov 23 demo, and only the proxy's screen showed them. The panel already says "Didn't catch that. Try again a little closer to the mic."; it could also mention holding *Hold to talk* while speaking.
 - ~~Check whether school Wi-Fi passes UDP broadcasts and device-to-device traffic~~ Done 2026-11-18: class uses the Meta router instead (see *Classroom network*).
