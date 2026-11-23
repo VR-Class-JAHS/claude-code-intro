@@ -1,6 +1,6 @@
 # VR Lab + Claude: where we are
 
-Last updated: 2026-11-20
+Last updated: 2026-11-23
 
 ## Next session (start here)
 
@@ -37,6 +37,13 @@ Week 1 of the project plan is done, and the classroom network works on the schoo
 **Next:** the student trial (Student trial kit above). Before class: NetBird's exit node on, Tailscale disconnected, delete the test entries in `vr-lab-proxy/logs/`. After it, read the question log next to the observation notes.
 
 **Class laptops' Wi-Fi (added 2026-11-20, PR #31):** `tools/wifi/switch-wifi.cmd` moves a Windows class laptop onto one Wi-Fi network: export the network once to a USB stick from a laptop already on it, then double-click the script on each laptop (steps in `tools/wifi/README.md`). The exported `.xml` holds the Wi-Fi password in plain text: keep it on the stick, never in the repo. Tested on the home laptop only in `/check` mode and its error cases; **not yet tried for real on a class laptop**, and school-managed laptops may block adding networks. Try one laptop first.
+
+**Demo laptop on the iPhone hotspot, set up 2026-11-23:** a school-managed laptop (`27Q480-PW0GHL1B`) now runs the proxy for demos on the user's iPhone hotspot. It ran the lab for a demo at the science department meeting that day, which got a good response. Only the proxy is set up there, not Unity or the Unity MCP server.
+- **Setup without admin rights:** the user's account isn't an admin there. Python 3.13 is installed for that user only, with `winget install --id Python.Python.3.13 --scope user`. There's no `py` launcher, so the `.venv` was made with `%LOCALAPPDATA%\Programs\Python\Python313\python.exe -m venv .venv`. The `.env` has the shared token (fingerprint `d1424a9e`) and `LOG_QUESTIONS=1`. The Whisper model is downloaded. The *VR Lab proxy (port 8000)* firewall rule was added from a PowerShell run as administrator. git isn't on the command line; GitHub Desktop's copy is at `%LOCALAPPDATA%\GitHubDesktop\app-3.7.0\resources\app\git\cmd\git.exe`.
+- **Tested on the hotspot:** `/health`, `/chat`, and a wrong token returning 401. Headset …08JG found the proxy by itself in the lab app and got an answer to a question. Anthropic is reachable directly on the hotspot, so this laptop has no NetBird.
+- **The hotspot gave the headset no IPv4 address:** the Quest's Wi-Fi details showed only an IPv6 address, with no IPv4 field at all, even with *Maximize Compatibility* on. The lab app needs IPv4. Fixed with a static IP on the Quest: `172.20.10.5`, gateway and DNS `172.20.10.1`, prefix length 28. The hotspot's addresses run from .1 to .14 and the laptop had .2, so give more headsets .6, .7 and so on. Set the headset back to automatic IP settings afterwards. Before that, the Quest had also switched back to another saved Wi-Fi network by itself.
+- **Symantec Endpoint Protection** is the firewall Windows reports on this laptop, and the Windows rule shows as *Inactive* in the active policy. Symantec didn't block the headset in the end: the first Quest browser test after the static IP failed, and a later one reached `/health`. It isn't clear whether the Windows rule was needed; keep it. If headsets can't reach this laptop, suspect Symantec, which school IT manages.
+- **Untested fallback:** a USB cable with `adb reverse tcp:8000 tcp:8000` and the proxy started with `ANNOUNCE=0`, so the app falls back to its `localhost` address. `adb` comes with Unity on this laptop (`C:\Program Files\Unity\Hub\Editor\6000.3.24f1\Editor\Data\PlaybackEngines\AndroidPlayer\SDK\platform-tools\adb.exe`).
 
 Done so far:
 
