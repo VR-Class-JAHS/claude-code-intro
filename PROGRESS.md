@@ -167,6 +167,6 @@ Answered 2026-11-18: a class fits the API key's rate limits with prompt caching 
 - Check each new tool on its own: measure_object after a student drop, lab_timer, set_gravity on Moon and zero.
 - Make Release hard to miss: a sound, or a highlight on the objects as they drop, so people look the right way. In the Nov 23 demo a teacher missed the drop, and a student missed one on Nov 20.
 - A *What can you do?* preset button: it was the first open question in the Nov 23 demo, and Claude's answer led straight into an experiment.
-- Add "drop" to the Whisper vocabulary hint (`speech.py`): "drop stuff" was heard as "scrap stuff" in the Nov 23 demo.
+- ~~Add "drop" to the Whisper vocabulary hint (`speech.py`): "drop stuff" was heard as "scrap stuff" in the Nov 23 demo.~~ Done 2026-11-23: the hint now says "Let's drop stuff on the Moon" (in place of "Gravity on the Moon"). Synthetic test clips came out the same as before (69 of 72); the real mishearing couldn't be reproduced, so check it with a spoken question. Restart the proxy to pick it up, on the demo laptop too.
 - Count empty recordings in the question log. Two or more came out empty in the Nov 23 demo, and only the proxy's screen showed them. The panel already says "Didn't catch that. Try again a little closer to the mic."; it could also mention holding *Hold to talk* while speaking.
 - ~~Check whether school Wi-Fi passes UDP broadcasts and device-to-device traffic~~ Done 2026-11-18: class uses the Meta router instead (see *Classroom network*).
