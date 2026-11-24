@@ -12,6 +12,9 @@ lists the lab's objects and how students talk about them. Tested 2026-11-19 on 4
 Windows voices, two speeds, with and without noise): 38 transcribed exactly right without it, 46 with it.
 It fixed the mishearings seen in a headset test ("spheres" heard as "spears", "land" as "landed"), and
 stopped Whisper turning silence or noise into the word "you"; an off-topic question came out the same.
+2026-11-23: "Gravity on the Moon" became "Let's drop stuff on the Moon" after a teacher's "let's drop stuff on
+the Moon" was heard as "scrap stuff" in a demo. On 72 test runs (the old clips plus three "drop" sentences)
+both versions got 69 exactly right; the synthetic voices never produced the mishearing, so that's untested.
 Set WHISPER_PROMPT= (empty) in .env to turn the hint off, or write your own.
 """
 
@@ -33,7 +36,7 @@ ENABLED = os.environ.get("WHISPER", "1") != "0"
 DEFAULT_PROMPT = (
     "A student in a VR physics lab talks to the lab assistant. Spawn a ball, a sphere, a block, a pendulum "
     "or a ramp. Drop the ball from 2 meters. Make one sphere twice the mass. I think they will both land at "
-    "the same time. Release. Gravity on the Moon. Graph the kinetic and potential energy."
+    "the same time. Release. Let's drop stuff on the Moon. Graph the kinetic and potential energy."
 )
 PROMPT = os.environ.get("WHISPER_PROMPT", DEFAULT_PROMPT).strip() or None
 MAX_SECONDS = 20
